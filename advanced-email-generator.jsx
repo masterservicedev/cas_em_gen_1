@@ -1,7 +1,7 @@
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import html2canvas from "html2canvas";
 
-/* -------------------- CONTENT LIBRARY -------------------- */
+/* ================= CONTENT ================= */
 
 const greetings = [
   "Greetings,",
@@ -9,24 +9,18 @@ const greetings = [
   "Hi there,",
   "Hey,",
   "Hope all is well,",
-  "Trust this finds you well,",
-  "Good day,",
-  "Welcome back,",
-  "Checking in with a quick note,",
-  "Reaching out today,"
+  "Trust this finds you well,"
 ];
 
 const headlines = [
-  "THE VIP RED CARPET WELCOME",
-  "YOUR EXCLUSIVE BONUS AWAITS",
   "SYSTEM UPGRADE DETECTED",
+  "YOUR EXCLUSIVE BONUS AWAITS",
   "HIGH ROLLER ACCESS GRANTED",
   "WELCOME TO THE WINNERS CIRCLE",
-  "YOUR PREMIUM OFFER IS READY",
-  "EXCLUSIVE PLAYER BENEFITS UNLOCKED",
+  "ELITE STATUS CONFIRMED",
   "A NEW REWARD EXPERIENCE",
-  "YOUR NEXT BIG OPPORTUNITY",
-  "ELITE STATUS CONFIRMED"
+  "YOUR ACCOUNT JUST GOT BETTER",
+  "EXCLUSIVE PLAYER BENEFITS UNLOCKED"
 ];
 
 const subheadlines = [
@@ -47,13 +41,18 @@ const bodyFlows = [
     "As a valued player, you now have access to an exclusive bonus.",
     "It’s a great way to explore more games without changing how you play.",
     "Everything is ready whenever you are."
+  ],
+  [
+    "Your account has been selected for a limited upgrade.",
+    "This enhancement is available for a short time only.",
+    "Make the most of it while it’s active."
   ]
 ];
 
 const featureTitles = [
-  "Why Play With Us?",
+  "Your Player Benefits",
   "What’s Included",
-  "Your Player Benefits"
+  "Why Play With Us?"
 ];
 
 const featureBullets = [
@@ -61,84 +60,164 @@ const featureBullets = [
   "Hundreds of premium games",
   "24/7 customer support",
   "Secure and trusted platform",
-  "Exclusive player promotions"
+  "Exclusive player promotions",
+  "Mobile-friendly gameplay"
 ];
 
 const closings = [
-  "Enjoy your play,",
+  "Happy gaming,",
   "Best of luck,",
-  "Happy gaming,"
+  "Enjoy your play,"
 ];
 
 const footerPromo = [
-  "This is a promotional offer. Please play responsibly."
+  "This is a promotional offer. Please play responsibly.",
+  "Promotional content. Always play within your limits."
 ];
 
 const footerUnsub = [
-  "If you no longer wish to receive these emails, please unsubscribe here."
+  "If you no longer wish to receive these emails, please unsubscribe here.",
+  "You can unsubscribe from future emails here."
 ];
 
-/* -------------------- HELPERS -------------------- */
+/* ================= HELPERS ================= */
 
-const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const pickMany = (arr, n) =>
-  [...arr].sort(() => 0.5 - Math.random()).slice(0, n);
+const pick = (arr, seed) => arr[seed % arr.length];
+const pickMany = (arr, seed, n) =>
+  [...arr]
+    .sort((a, b) => (a > b ? 1 : -1))
+    .slice(seed % (arr.length - n), seed % (arr.length - n) + n);
 
-/* -------------------- COMPONENT -------------------- */
+/* ================= LAYOUTS ================= */
+
+const layouts = [
+  // 1. Classic
+  (c) => (
+    <EmailShell>
+      <h1>{c.headline}</h1>
+      <h3>{c.subheadline}</h3>
+      <p>{c.greeting}</p>
+      {c.body.map((p, i) => <p key={i}>{p}</p>)}
+      <h4>{c.featureTitle}</h4>
+      <ul>{c.features.map((f, i) => <li key={i}>{f}</li>)}</ul>
+      <p>{c.closing}</p>
+      <Footer c={c} />
+    </EmailShell>
+  ),
+
+  // 2. Editorial
+  (c) => (
+    <EmailShell>
+      <small>EDITORIAL</small>
+      <h1>{c.headline}</h1>
+      {c.body.map((p, i) => <p key={i}>{p}</p>)}
+      <Footer c={c} />
+    </EmailShell>
+  ),
+
+  // 3. Newsletter
+  (c) => (
+    <EmailShell>
+      <h2>{c.headline}</h2>
+      <p><strong>{c.subheadline}</strong></p>
+      <ul>{c.features.map((f, i) => <li key={i}>{f}</li>)}</ul>
+      <Footer c={c} />
+    </EmailShell>
+  ),
+
+  // 4. Minimal
+  (c) => (
+    <EmailShell>
+      <h2>{c.headline}</h2>
+      <p>{c.body[0]}</p>
+      <Footer c={c} />
+    </EmailShell>
+  ),
+
+  // 5. Feature-led
+  (c) => (
+    <EmailShell>
+      <h1>{c.headline}</h1>
+      <h4>{c.featureTitle}</h4>
+      <ul>{c.features.map((f, i) => <li key={i}>{f}</li>)}</ul>
+      <Footer c={c} />
+    </EmailShell>
+  ),
+
+  // 6–10 reuse structure but will diverge visually later
+  (c) => layouts[0](c),
+  (c) => layouts[1](c),
+  (c) => layouts[2](c),
+  (c) => layouts[3](c),
+  (c) => layouts[4](c)
+];
+
+/* ================= COMPONENT ================= */
 
 export default function AdvancedEmailGenerator() {
-  const previewRef = useRef(null);
   const [index, setIndex] = useState(0);
+  const previewRef = useRef(null);
 
   const content = useMemo(() => {
     return {
-      greeting: rand(greetings),
-      headline: rand(headlines),
-      subheadline: rand(subheadlines),
-      body: rand(bodyFlows),
-      featureTitle: rand(featureTitles),
-      features: pickMany(featureBullets, 3),
-      closing: rand(closings),
-      footer1: rand(footerPromo),
-      footer2: rand(footerUnsub)
+      greeting: pick(greetings, index),
+      headline: pick(headlines, index),
+      subheadline: pick(subheadlines, index),
+      body: pick(bodyFlows, index),
+      featureTitle: pick(featureTitles, index),
+      features: pickMany(featureBullets, index, 3),
+      closing: pick(closings, index),
+      footer1: pick(footerPromo, index),
+      footer2: pick(footerUnsub, index)
     };
   }, [index]);
 
-  const layouts = [
-    (c) => (
-      <div style={{ maxWidth: 600, margin: "0 auto", padding: 20, border: "1px solid #ddd" }}>
-        <h1>{c.headline}</h1>
-        <h3>{c.subheadline}</h3>
-        <p>{c.greeting}</p>
-        {c.body.map((p, i) => <p key={i}>{p}</p>)}
-        <h4>{c.featureTitle}</h4>
-        <ul>{c.features.map((f, i) => <li key={i}>{f}</li>)}</ul>
-        <p>{c.closing}</p>
-        <small>{c.footer1}</small><br />
-        <small>{c.footer2}</small>
-      </div>
-    )
-  ];
+  const Layout = layouts[index % layouts.length];
 
-  const downloadImage = async (count = 1) => {
+  const downloadImage = async () => {
     if (!previewRef.current) return;
-    for (let i = 0; i < count; i++) {
-      const canvas = await html2canvas(previewRef.current, { scale: 2 });
-      const a = document.createElement("a");
-      a.href = canvas.toDataURL("image/png");
-      a.download = `email-${Date.now()}-${i + 1}.png`;
-      a.click();
-    }
+    const canvas = await html2canvas(previewRef.current, { scale: 2 });
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `email-${index + 1}.png`;
+    a.click();
   };
 
   return (
     <div style={{ padding: 20 }}>
-      <button onClick={() => setIndex(index + 1)}>Next</button>
-      <button onClick={() => downloadImage(10)}>Download 10 Images</button>
+      <button onClick={() => setIndex(i => i + 1)}>Next</button>
+      <button onClick={() => setIndex(i => Math.max(0, i - 1))}>Prev</button>
+      <button onClick={downloadImage}>Download Image</button>
 
-      <div ref={previewRef} style={{ marginTop: 20 }}>
-        {layouts[index % layouts.length](content)}
+      <div ref={previewRef} style={{ marginTop: 30 }}>
+        <Layout {...content} />
       </div>
     </div>
+  );
+}
+
+/* ================= SHARED ================= */
+
+function EmailShell({ children }) {
+  return (
+    <div style={{
+      maxWidth: 600,
+      margin: "0 auto",
+      padding: 24,
+      border: "1px solid #ddd",
+      background: "#fff"
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function Footer({ c }) {
+  return (
+    <>
+      <hr />
+      <small>{c.footer1}</small><br />
+      <small>{c.footer2}</small>
+    </>
   );
 }
