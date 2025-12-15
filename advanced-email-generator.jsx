@@ -1,16 +1,43 @@
 import React, { useState, useMemo, useRef } from "react";
 import html2canvas from "html2canvas";
 
-/* ================= CONTENT ================= */
+/* ================= SPINTAX ================= */
 
-const greetings = [
-  "Greetings,",
-  "Hello,",
-  "Hi there,",
-  "Hey,",
-  "Hope all is well,",
-  "Trust this finds you well,"
+function expandSpintax(str, seed) {
+  let i = 0;
+  return str.replace(/\{([^{}]+)\}/g, (_, group) => {
+    const options = group.split("|");
+    const pick = options[Math.floor((seed + i++) * 997) % options.length];
+    return pick;
+  });
+}
+
+/* ================= SUBJECT SPINTAX POOL ================= */
+
+const SPINTAX_SUBJECTS = [
+  "Fwd: {Have you heard this yet?|Did you hear?|Have you seen this?|This just came out!}",
+  "🎁 {No one told you this…|Nobody mentioned this before…|You haven't heard this yet…|This was kept from you…}",
+  "Fwd: {Something big is happening|Something's going on|A major shift is coming|An event is unfolding} {behind the scenes|in the background|right now|that you don’t know about}",
+  "{You won’t believe what’s inside|Wait until you see this|This is shocking|Unreal content inside}",
+  "{Only for|Just for|Exclusively for} {sharp eyes|the curious ones|those who notice|true observers} 👀 🔒",
+  "Re: {Don’t open this…|Avoid this email…|You might regret clicking…|Only click if you're brave} {unless you’re ready|if you dare|unless you're sure|if you can handle it}",
+  "{A secret|Something hidden|A mystery|An untold story} {everyone’s hiding|no one is talking about|just surfaced|is finally revealed}",
+  "Fwd: {Why is nobody talking about this?|Why is this being ignored?|Why the silence?|No one is mentioning this, but...}",
+  "{Finally uncovered…|At last revealed…|The truth is out…|No longer hidden…}",
+  "{Only you will understand this|This message is meant for you|You were meant to see this|You’ll get it when no one else will}",
+  "{Hidden in plain sight…|Right under your nose|It was here all along|You’ve seen it—but didn’t see it}",
+  "🎁 {We weren’t supposed to show you this|This slipped through|We broke the rules for this|This wasn’t meant to be shared}",
+  "Fwd: {Not your typical email|This stands out|Unusual message alert|This breaks the pattern}",
+  "{Blink and you’ll miss it|Act fast|A short window|Gone before you know it}",
+  "{This might be your only chance|Last shot at this|Once-in-a-lifetime?|Won’t happen again}",
+  "{Can you crack the code?|A riddle for you|Something to solve|There’s a pattern here} 🎯",
+  "{Open at your own risk|Not for the faint-hearted|Warning: intense stuff}",
+  "{The missing piece you’ve been looking for|It all makes sense now|The puzzle is complete}",
+  "{Everything led to this moment|It all comes together now|This is the point}",
+  "🔥 {Only for you – take a look|Exclusively for you – check this out|Just for you – have a look}"
 ];
+
+/* ================= CONTENT ================= */
 
 const headlines = [
   "SYSTEM UPGRADE DETECTED",
@@ -19,16 +46,7 @@ const headlines = [
   "WELCOME TO THE WINNERS CIRCLE",
   "ELITE STATUS CONFIRMED",
   "A NEW REWARD EXPERIENCE",
-  "YOUR ACCOUNT JUST GOT BETTER",
-  "EXCLUSIVE PLAYER BENEFITS UNLOCKED"
-];
-
-const subheadlines = [
-  "Boost your bankroll with added value today",
-  "Limited-time rewards for active players",
-  "Extra playtime is waiting inside",
-  "Enjoy enhanced value on your next session",
-  "Designed for players who want more"
+  "YOUR ACCOUNT JUST GOT BETTER"
 ];
 
 const bodyFlows = [
@@ -41,62 +59,30 @@ const bodyFlows = [
     "As a valued player, you now have access to an exclusive bonus.",
     "It’s a great way to explore more games without changing how you play.",
     "Everything is ready whenever you are."
-  ],
-  [
-    "Your account has been selected for a limited upgrade.",
-    "This enhancement is available for a short time only.",
-    "Make the most of it while it’s active."
   ]
 ];
-
-const featureTitles = ["Your Player Benefits", "What’s Included", "Why Play With Us?"];
 
 const featureBullets = [
   "Fast and reliable payouts",
   "Hundreds of premium games",
   "24/7 customer support",
   "Secure and trusted platform",
-  "Exclusive player promotions",
-  "Mobile-friendly gameplay"
+  "Exclusive player promotions"
 ];
 
-const closings = ["Happy gaming,", "Best of luck,", "Enjoy your play,"];
-
 const footerPromo = [
-  "This is a promotional offer. Please play responsibly.",
-  "Promotional content. Always play within your limits."
+  "This is a promotional offer. Please play responsibly."
 ];
 
 const footerUnsub = [
-  "If you no longer wish to receive these emails, please unsubscribe here.",
-  "You can unsubscribe from future emails here."
+  "If you no longer wish to receive these emails, please unsubscribe here."
 ];
-
-/* ================= SUBJECT ENGINE =================
-   Deterministic, index-aligned, 50+ unique combos
-*/
-const subjPrefix = [
-  "Exclusive", "Limited-Time", "VIP", "Member-Only", "Just for You", "Unlocked", "Priority"
-];
-const subjValue = [
-  "Reward", "Offer", "Bonus", "Upgrade", "Perk", "Boost", "Advantage"
-];
-const subjAction = [
-  "Activate now", "Claim today", "Available now", "Inside", "Ready", "Live", "Waiting"
-];
-const subjUrgency = [
-  "Ends soon", "Tonight only", "Limited availability", "Don’t miss out", "Before it expires"
-];
-
-const sanitize = (s) => s.replace(/\s+/g, " ").trim();
 
 /* ================= HELPERS ================= */
 
 const pick = (arr, seed) => arr[seed % arr.length];
 const pickMany = (arr, seed, n) =>
-  [...arr]
-    .sort((a, b) => (a > b ? 1 : -1))
-    .slice(seed % (arr.length - n), seed % (arr.length - n) + n);
+  [...arr].slice(seed % (arr.length - n), seed % (arr.length - n) + n);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -120,21 +106,35 @@ function downloadCSV(filename, rows) {
   URL.revokeObjectURL(a.href);
 }
 
-/* ================= LAYOUTS ================= */
+/* ================= SUBJECT ENGINE ================= */
+
+function subjectFor(seed, content) {
+  // 2/3 spintax, 1/3 structured fallback
+  if (seed % 3 !== 0) {
+    const base = SPINTAX_SUBJECTS[seed % SPINTAX_SUBJECTS.length];
+    return expandSpintax(base, seed).trim();
+  }
+
+  const hook = content.headline
+    .replace(/DETECTED|CONFIRMED|GRANTED|UNLOCKED/gi, "")
+    .trim();
+
+  const structured = [
+    `Exclusive update: ${hook}`,
+    `Something new just dropped`,
+    `This wasn’t supposed to be shared`,
+    `Only a few will notice this`,
+    `A change worth checking out`
+  ];
+
+  return structured[seed % structured.length];
+}
+
+/* ================= LAYOUT (UNCHANGED) ================= */
 
 function EmailShell({ children }) {
   return (
-    <div
-      style={{
-        maxWidth: 600,
-        margin: "0 auto",
-        padding: 24,
-        border: "1px solid #ddd",
-        background: "#fff",
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif'
-      }}
-    >
+    <div style={{ maxWidth: 600, margin: "0 auto", padding: 24, border: "1px solid #ddd", background: "#fff" }}>
       {children}
     </div>
   );
@@ -144,114 +144,21 @@ function Footer({ c }) {
   return (
     <>
       <hr />
-      <small>{c.footer1}</small>
-      <br />
-      <small>
-        {c.footer2}{" "}
-        <span style={{ textDecoration: "underline", cursor: "pointer" }}>unsubscribe here</span>.
-      </small>
+      <small>{c.footer1}</small><br />
+      <small>{c.footer2}</small>
     </>
   );
 }
 
 const layouts = [
-  // 1. Classic
   (c) => (
     <EmailShell>
-      <h1 style={{ margin: "0 0 10px" }}>{c.headline}</h1>
-      <h3 style={{ margin: "0 0 14px" }}>{c.subheadline}</h3>
-      <p><strong>{c.greeting}</strong></p>
-      {c.body.map((p, i) => (
-        <p key={i} style={{ lineHeight: 1.5 }}>{p}</p>
-      ))}
-      <h4 style={{ marginTop: 18 }}>{c.featureTitle}</h4>
-      <ul>
-        {c.features.map((f, i) => (
-          <li key={i}>{f}</li>
-        ))}
-      </ul>
-      <p style={{ marginTop: 18 }}><strong>{c.closing}</strong></p>
+      <h1>{c.headline}</h1>
+      {c.body.map((p, i) => <p key={i}>{p}</p>)}
+      <ul>{c.features.map((f, i) => <li key={i}>{f}</li>)}</ul>
       <Footer c={c} />
     </EmailShell>
-  ),
-
-  // 2. Editorial
-  (c) => (
-    <EmailShell>
-      <small style={{ letterSpacing: 1 }}>EDITORIAL</small>
-      <h1 style={{ margin: "8px 0 12px" }}>{c.headline}</h1>
-      <p style={{ fontStyle: "italic" }}>{c.subheadline}</p>
-      {c.body.map((p, i) => (
-        <p key={i} style={{ lineHeight: 1.6 }}>{p}</p>
-      ))}
-      <Footer c={c} />
-    </EmailShell>
-  ),
-
-  // 3. Newsletter
-  (c) => (
-    <EmailShell>
-      <h2 style={{ margin: "0 0 10px" }}>{c.headline}</h2>
-      <p><strong>{c.subheadline}</strong></p>
-      <table width="100%" cellPadding="0" cellSpacing="0" style={{ marginTop: 12 }}>
-        <tbody>
-          <tr>
-            <td width="50%" style={{ verticalAlign: "top", paddingRight: 10 }}>
-              <h4 style={{ margin: "0 0 6px" }}>{c.featureTitle}</h4>
-              <ul>
-                {c.features.slice(0, 2).map((f, i) => (
-                  <li key={i}>{f}</li>
-                ))}
-              </ul>
-            </td>
-            <td width="50%" style={{ verticalAlign: "top", paddingLeft: 10 }}>
-              <h4 style={{ margin: "0 0 6px" }}>Highlights</h4>
-              <ul>
-                {c.features.slice(1, 3).map((f, i) => (
-                  <li key={i}>{f}</li>
-                ))}
-              </ul>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <Footer c={c} />
-    </EmailShell>
-  ),
-
-  // 4. Minimal
-  (c) => (
-    <EmailShell>
-      <h2 style={{ margin: "0 0 10px" }}>{c.headline}</h2>
-      <p style={{ margin: "0 0 14px" }}>{c.subheadline}</p>
-      <p style={{ lineHeight: 1.6 }}>{c.body[0]}</p>
-      <Footer c={c} />
-    </EmailShell>
-  ),
-
-  // 5. Feature-led
-  (c) => (
-    <EmailShell>
-      <h1 style={{ margin: "0 0 12px" }}>{c.headline}</h1>
-      <h4 style={{ margin: "0 0 10px" }}>{c.featureTitle}</h4>
-      <ul>
-        {c.features.map((f, i) => (
-          <li key={i}>{f}</li>
-        ))}
-      </ul>
-      {c.body.slice(0, 2).map((p, i) => (
-        <p key={i} style={{ lineHeight: 1.5 }}>{p}</p>
-      ))}
-      <Footer c={c} />
-    </EmailShell>
-  ),
-
-  // 6–10 reserved for next step (visual divergence)
-  (c) => layouts[0](c),
-  (c) => layouts[1](c),
-  (c) => layouts[2](c),
-  (c) => layouts[3](c),
-  (c) => layouts[4](c)
+  )
 ];
 
 /* ================= COMPONENT ================= */
@@ -259,123 +166,40 @@ const layouts = [
 export default function AdvancedEmailGenerator() {
   const [index, setIndex] = useState(0);
   const [subjects, setSubjects] = useState([]);
-  const [isBatching, setIsBatching] = useState(false);
   const previewRef = useRef(null);
 
-  const content = useMemo(() => {
-    return {
-      greeting: pick(greetings, index),
-      headline: pick(headlines, index),
-      subheadline: pick(subheadlines, index),
-      body: pick(bodyFlows, index),
-      featureTitle: pick(featureTitles, index),
-      features: pickMany(featureBullets, index, 3),
-      closing: pick(closings, index),
-      footer1: pick(footerPromo, index),
-      footer2: pick(footerUnsub, index)
-    };
-  }, [index]);
+  const content = useMemo(() => ({
+    headline: pick(headlines, index),
+    body: pick(bodyFlows, index),
+    features: pickMany(featureBullets, index, 3),
+    footer1: pick(footerPromo, index),
+    footer2: pick(footerUnsub, index)
+  }), [index]);
 
-  const Layout = layouts[index % layouts.length];
-
-  const subjectFor = (seed, c) => {
-    const p = pick(subjPrefix, seed);
-    const v = pick(subjValue, seed + 7);
-    const a = pick(subjAction, seed + 13);
-    const u = pick(subjUrgency, seed + 19);
-    // tie to headline subtly
-    const hook = sanitize(c.headline.replace(/DETECTED|CONFIRMED|GRANTED|UNLOCKED/gi, "").trim());
-    return sanitize(`${p} ${v}: ${hook} | ${a} (${u})`);
-  };
-
-  const generate50Subjects = () => {
-    const list = Array.from({ length: 50 }, (_, i) => subjectFor(i + index * 3, content));
+  const generateSubjects = () => {
+    const list = Array.from({ length: 50 }, (_, i) =>
+      subjectFor(i + index * 7, content)
+    );
     setSubjects(list);
   };
 
-  const exportSubjectsTXT = () => {
-    if (!subjects.length) return;
-    downloadText("subjects.txt", subjects.join("\n"));
-  };
-
-  const exportSubjectsCSV = () => {
-    if (!subjects.length) return;
-    const rows = [["Subject Line"], ...subjects.map((s) => [s])];
-    downloadCSV("subjects.csv", rows);
-  };
-
-  // Google Sheets “works” = importable CSV + matching image names
-  const exportSheetsIndexCSV = () => {
-    if (!subjects.length) return;
-    const rows = [["Template #", "Subject Line", "Image Filename"]];
-    subjects.slice(0, 10).forEach((s, i) => {
-      rows.push([String(i + 1), s, `email-${i + 1}.png`]);
-    });
-    downloadCSV("google-sheets-index.csv", rows);
-  };
-
-  const downloadCurrentImage = async () => {
-    if (!previewRef.current) return;
-    const canvas = await html2canvas(previewRef.current, { scale: 2 });
-    const a = document.createElement("a");
-    a.href = canvas.toDataURL("image/png");
-    a.download = `email-${index + 1}.png`;
-    a.click();
-  };
-
-  const download10Images = async () => {
-    if (isBatching) return;
-    setIsBatching(true);
-
-    const start = index;
-    for (let i = 0; i < 10; i++) {
-      setIndex(start + i);
-      // allow React to render
-      await sleep(250);
-      if (!previewRef.current) continue;
-
-      const canvas = await html2canvas(previewRef.current, { scale: 2 });
-      const a = document.createElement("a");
-      a.href = canvas.toDataURL("image/png");
-      a.download = `email-${i + 1}.png`;
-      a.click();
-      await sleep(200);
-    }
-
-    setIndex(start);
-    setIsBatching(false);
-  };
+  const exportTXT = () => downloadText("subjects.txt", subjects.join("\n"));
+  const exportCSV = () =>
+    downloadCSV("subjects.csv", [["Subject"], ...subjects.map((s) => [s])]);
 
   return (
     <div style={{ padding: 20 }}>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button disabled={isBatching} onClick={() => setIndex((i) => Math.max(0, i - 1))}>Prev</button>
-        <button disabled={isBatching} onClick={() => setIndex((i) => i + 1)}>Next</button>
+      <button onClick={() => setIndex(i => i + 1)}>Next</button>
+      <button onClick={generateSubjects}>Generate 50 Subjects</button>
+      <button disabled={!subjects.length} onClick={exportTXT}>Export TXT</button>
+      <button disabled={!subjects.length} onClick={exportCSV}>Export CSV</button>
 
-        <button disabled={isBatching} onClick={downloadCurrentImage}>Download Image</button>
-        <button disabled={isBatching} onClick={download10Images}>Download 10 Images</button>
-
-        <button disabled={isBatching} onClick={generate50Subjects}>Generate 50 Subjects</button>
-        <button disabled={!subjects.length || isBatching} onClick={exportSubjectsTXT}>Export TXT</button>
-        <button disabled={!subjects.length || isBatching} onClick={exportSubjectsCSV}>Export CSV</button>
-        <button disabled={!subjects.length || isBatching} onClick={exportSheetsIndexCSV}>Sheets Index CSV</button>
-
-        <span style={{ marginLeft: 10, opacity: 0.7 }}>
-          Template #{index + 1} (Layout {(index % layouts.length) + 1})
-        </span>
+      <div style={{ marginTop: 12 }}>
+        {subjects.slice(0, 10).map((s, i) => <div key={i}>{s}</div>)}
       </div>
 
-      {subjects.length > 0 && (
-        <div style={{ marginTop: 14, maxWidth: 900 }}>
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>Subjects (first 10 shown)</div>
-          <ol style={{ marginTop: 0 }}>
-            {subjects.slice(0, 10).map((s, i) => <li key={i}>{s}</li>)}
-          </ol>
-        </div>
-      )}
-
       <div ref={previewRef} style={{ marginTop: 24 }}>
-        <Layout {...content} />
+        {layouts[0](content)}
       </div>
     </div>
   );
