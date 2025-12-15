@@ -291,7 +291,8 @@ export default function AdvancedEmailGenerator() {
     <div style={{ padding: 20 }}>
       <button onClick={() => setIndex(index + 1)}>Next</button>
       <button onClick={() => downloadImage(10)}>Download 10 Images</button>
-      <div ref={previewRef}>{/* rendered layout here */}</div>
+      <div ref={previewRef}>
+        {layouts[index % layouts.length](current)}
     </div>
   );
 }
