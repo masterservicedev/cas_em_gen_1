@@ -1,52 +1,63 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import html2canvas from "html2canvas";
 
-/* ================= SPINTAX ================= */
+/* =========================
+   SPINTAX ENGINE
+========================= */
 
-function expandSpintax(str, seed) {
+function expandSpintax(str, seed = Math.random()) {
   let i = 0;
   return str.replace(/\{([^{}]+)\}/g, (_, group) => {
     const options = group.split("|");
-    const pick = options[Math.floor((seed + i++) * 997) % options.length];
+    const pick =
+      options[Math.floor(((seed + i++) * 997) % options.length)];
     return pick;
   });
 }
 
-/* ================= SUBJECT SPINTAX POOL ================= */
+/* =========================
+   SUBJECT LIBRARY (SPINTAX)
+========================= */
 
 const SPINTAX_SUBJECTS = [
   "Fwd: {Have you heard this yet?|Did you hear?|Have you seen this?|This just came out!}",
-  "🎁 {No one told you this…|Nobody mentioned this before…|You haven't heard this yet…|This was kept from you…}",
-  "Fwd: {Something big is happening|Something's going on|A major shift is coming|An event is unfolding} {behind the scenes|in the background|right now|that you don’t know about}",
   "{You won’t believe what’s inside|Wait until you see this|This is shocking|Unreal content inside}",
-  "{Only for|Just for|Exclusively for} {sharp eyes|the curious ones|those who notice|true observers} 👀 🔒",
-  "Re: {Don’t open this…|Avoid this email…|You might regret clicking…|Only click if you're brave} {unless you’re ready|if you dare|unless you're sure|if you can handle it}",
-  "{A secret|Something hidden|A mystery|An untold story} {everyone’s hiding|no one is talking about|just surfaced|is finally revealed}",
-  "Fwd: {Why is nobody talking about this?|Why is this being ignored?|Why the silence?|No one is mentioning this, but...}",
-  "{Finally uncovered…|At last revealed…|The truth is out…|No longer hidden…}",
-  "{Only you will understand this|This message is meant for you|You were meant to see this|You’ll get it when no one else will}",
-  "{Hidden in plain sight…|Right under your nose|It was here all along|You’ve seen it—but didn’t see it}",
-  "🎁 {We weren’t supposed to show you this|This slipped through|We broke the rules for this|This wasn’t meant to be shared}",
-  "Fwd: {Not your typical email|This stands out|Unusual message alert|This breaks the pattern}",
-  "{Blink and you’ll miss it|Act fast|A short window|Gone before you know it}",
-  "{This might be your only chance|Last shot at this|Once-in-a-lifetime?|Won’t happen again}",
-  "{Can you crack the code?|A riddle for you|Something to solve|There’s a pattern here} 🎯",
-  "{Open at your own risk|Not for the faint-hearted|Warning: intense stuff}",
-  "{The missing piece you’ve been looking for|It all makes sense now|The puzzle is complete}",
-  "{Everything led to this moment|It all comes together now|This is the point}",
-  "🔥 {Only for you – take a look|Exclusively for you – check this out|Just for you – have a look}"
+  "{Only for|Just for|Exclusively for} {sharp eyes|the curious ones|those who notice|true observers} 👀",
+  "Re: {Don’t open this…|Avoid this email…|Only click if you're brave}",
+  "{A secret|Something hidden|A mystery} {just surfaced|is finally revealed}",
+  "Fwd: {Something big is happening|A major shift is coming} {behind the scenes|right now}",
+  "{Hidden in plain sight…|Right under your nose|You’ve seen it—but didn’t see it}",
+  "🔥 {Only for those who notice|Not for everyone|Rare opportunity}",
+  "📆 {Here today, gone tomorrow|Vanishing soon|This won’t last}",
+  "{This isn’t random|Specifically chosen|Made just for you}",
+  // you can keep extending this list safely
 ];
 
-/* ================= CONTENT ================= */
+/* =========================
+   CONTENT LIBRARY
+========================= */
+
+const greetings = [
+  "Greetings,",
+  "Hello,",
+  "Hi there,",
+  "Welcome back,",
+  "Checking in with a quick note,"
+];
 
 const headlines = [
+  "THE VIP RED CARPET WELCOME",
+  "EXCLUSIVE PLAYER BENEFITS UNLOCKED",
   "SYSTEM UPGRADE DETECTED",
-  "YOUR EXCLUSIVE BONUS AWAITS",
   "HIGH ROLLER ACCESS GRANTED",
-  "WELCOME TO THE WINNERS CIRCLE",
-  "ELITE STATUS CONFIRMED",
-  "A NEW REWARD EXPERIENCE",
-  "YOUR ACCOUNT JUST GOT BETTER"
+  "YOUR PREMIUM OFFER IS READY"
+];
+
+const subheadlines = [
+  "Boost your bankroll with added value today",
+  "Limited-time rewards for active players",
+  "Extra playtime is waiting inside",
+  "Designed for players who want more"
 ];
 
 const bodyFlows = [
@@ -62,6 +73,12 @@ const bodyFlows = [
   ]
 ];
 
+const featureTitles = [
+  "Why Play With Us?",
+  "What’s Included",
+  "Your Player Benefits"
+];
+
 const featureBullets = [
   "Fast and reliable payouts",
   "Hundreds of premium games",
@@ -70,137 +87,127 @@ const featureBullets = [
   "Exclusive player promotions"
 ];
 
+const closings = [
+  "Enjoy your play,",
+  "Best of luck,",
+  "Happy gaming,"
+];
+
 const footerPromo = [
-  "This is a promotional offer. Please play responsibly."
+  "This is a promotional offer. Please play responsibly.",
+  "Limited-time promotion. Play responsibly."
 ];
 
 const footerUnsub = [
-  "If you no longer wish to receive these emails, please unsubscribe here."
+  "If you no longer wish to receive these emails, please unsubscribe here.",
+  "You may unsubscribe at any time using this link."
 ];
 
-/* ================= HELPERS ================= */
+/* =========================
+   HELPERS
+========================= */
 
-const pick = (arr, seed) => arr[seed % arr.length];
-const pickMany = (arr, seed, n) =>
-  [...arr].slice(seed % (arr.length - n), seed % (arr.length - n) + n);
+const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const pickMany = (arr, n) =>
+  [...arr].sort(() => 0.5 - Math.random()).slice(0, n);
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-function downloadText(filename, text) {
-  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function downloadCSV(filename, rows) {
-  const esc = (v) => `"${String(v).replace(/"/g, '""')}"`;
-  const csv = rows.map((r) => r.map(esc).join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-/* ================= SUBJECT ENGINE ================= */
+/* =========================
+   SUBJECT GENERATOR
+========================= */
 
 function subjectFor(seed, content) {
-  // 2/3 spintax, 1/3 structured fallback
-  if (seed % 3 !== 0) {
-    const base = SPINTAX_SUBJECTS[seed % SPINTAX_SUBJECTS.length];
+  const useSpintax = seed % 3 !== 0;
+
+  if (useSpintax) {
+    const base =
+      SPINTAX_SUBJECTS[seed % SPINTAX_SUBJECTS.length];
     return expandSpintax(base, seed).trim();
   }
 
-  const hook = content.headline
-    .replace(/DETECTED|CONFIRMED|GRANTED|UNLOCKED/gi, "")
-    .trim();
-
   const structured = [
-    `Exclusive update: ${hook}`,
-    `Something new just dropped`,
-    `This wasn’t supposed to be shared`,
-    `Only a few will notice this`,
-    `A change worth checking out`
+    "Exclusive update just dropped",
+    "Something new worth seeing",
+    "A change you’ll want to notice",
+    "This wasn’t meant to be shared",
+    "Only a few will catch this"
   ];
 
   return structured[seed % structured.length];
 }
 
-/* ================= LAYOUT (UNCHANGED) ================= */
-
-function EmailShell({ children }) {
-  return (
-    <div style={{ maxWidth: 600, margin: "0 auto", padding: 24, border: "1px solid #ddd", background: "#fff" }}>
-      {children}
-    </div>
-  );
-}
-
-function Footer({ c }) {
-  return (
-    <>
-      <hr />
-      <small>{c.footer1}</small><br />
-      <small>{c.footer2}</small>
-    </>
-  );
-}
-
-const layouts = [
-  (c) => (
-    <EmailShell>
-      <h1>{c.headline}</h1>
-      {c.body.map((p, i) => <p key={i}>{p}</p>)}
-      <ul>{c.features.map((f, i) => <li key={i}>{f}</li>)}</ul>
-      <Footer c={c} />
-    </EmailShell>
-  )
-];
-
-/* ================= COMPONENT ================= */
+/* =========================
+   COMPONENT
+========================= */
 
 export default function AdvancedEmailGenerator() {
+  const previewRef = useRef(null);
   const [index, setIndex] = useState(0);
   const [subjects, setSubjects] = useState([]);
-  const previewRef = useRef(null);
 
-  const content = useMemo(() => ({
-    headline: pick(headlines, index),
-    body: pick(bodyFlows, index),
-    features: pickMany(featureBullets, index, 3),
-    footer1: pick(footerPromo, index),
-    footer2: pick(footerUnsub, index)
-  }), [index]);
+  const content = useMemo(() => {
+    return {
+      greeting: rand(greetings),
+      headline: rand(headlines),
+      subheadline: rand(subheadlines),
+      body: rand(bodyFlows),
+      featureTitle: rand(featureTitles),
+      features: pickMany(featureBullets, 3),
+      closing: rand(closings),
+      footer1: rand(footerPromo),
+      footer2: rand(footerUnsub)
+    };
+  }, [index]);
 
   const generateSubjects = () => {
-    const list = Array.from({ length: 50 }, (_, i) =>
-      subjectFor(i + index * 7, content)
+    const list = Array.from({ length: 100 }, (_, i) =>
+      subjectFor(i + index * 17, content)
     );
     setSubjects(list);
   };
 
-  const exportTXT = () => downloadText("subjects.txt", subjects.join("\n"));
-  const exportCSV = () =>
-    downloadCSV("subjects.csv", [["Subject"], ...subjects.map((s) => [s])]);
+  const downloadImage = async (count = 1) => {
+    if (!previewRef.current) return;
+    for (let i = 0; i < count; i++) {
+      const canvas = await html2canvas(previewRef.current, { scale: 2 });
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = `email-${Date.now()}-${i + 1}.png`;
+      a.click();
+    }
+  };
 
   return (
     <div style={{ padding: 20 }}>
-      <button onClick={() => setIndex(i => i + 1)}>Next</button>
-      <button onClick={generateSubjects}>Generate 50 Subjects</button>
-      <button disabled={!subjects.length} onClick={exportTXT}>Export TXT</button>
-      <button disabled={!subjects.length} onClick={exportCSV}>Export CSV</button>
+      <h2>Email Generator</h2>
 
-      <div style={{ marginTop: 12 }}>
-        {subjects.slice(0, 10).map((s, i) => <div key={i}>{s}</div>)}
+      <button onClick={() => setIndex(index + 1)}>Next Template</button>
+      <button onClick={generateSubjects}>Generate 100 Subjects</button>
+      <button onClick={() => downloadImage(10)}>Download 10 Images</button>
+
+      <div ref={previewRef} style={{ marginTop: 20, padding: 20, border: "1px solid #ccc" }}>
+        <h1>{content.headline}</h1>
+        <h3>{content.subheadline}</h3>
+        <p>{content.greeting}</p>
+
+        {content.body.map((p, i) => (
+          <p key={i}>{p}</p>
+        ))}
+
+        <h4>{content.featureTitle}</h4>
+        <ul>
+          {content.features.map((f, i) => (
+            <li key={i}>{f}</li>
+          ))}
+        </ul>
+
+        <p>{content.closing}</p>
+        <small>{content.footer1}</small><br />
+        <small>{content.footer2}</small>
       </div>
 
-      <div ref={previewRef} style={{ marginTop: 24 }}>
-        {layouts[0](content)}
-      </div>
+      <pre style={{ marginTop: 20, maxHeight: 300, overflow: "auto" }}>
+        {subjects.join("\n")}
+      </pre>
     </div>
   );
 }
