@@ -3,7 +3,6 @@ import html2canvas from "html2canvas";
 
 /* ===========================
    SEEDED RANDOM (DETERMINISTIC)
-   - Stable per index, no “jumping”
 =========================== */
 function mulberry32(seed) {
   let a = seed >>> 0;
@@ -33,7 +32,6 @@ function pickManySeeded(arr, r, n) {
    SPINTAX
 =========================== */
 function expandSpintax(str, seedNum) {
-  // deterministic-ish expansion across a batch
   const r = mulberry32(seedNum * 99991 + 1337);
   let i = 0;
   return str.replace(/\{([^{}]+)\}/g, (_, group) => {
@@ -44,7 +42,7 @@ function expandSpintax(str, seedNum) {
 }
 
 /* ===========================
-   SUBJECT POOL (SPINTAX) – NO [%%FEmailUser%%]
+   SUBJECT POOL – NO [%%FEmailUser%%]
 =========================== */
 const SPINTAX_SUBJECTS = [
   "Fwd: {Have you heard this yet?|Did you hear?|Have you seen this?|This just came out!}",
@@ -56,7 +54,6 @@ const SPINTAX_SUBJECTS = [
   "{A secret|Something hidden|A mystery|An untold story} {everyone’s hiding|no one is talking about|just surfaced|is finally revealed}",
   "Fwd: {Why is nobody talking about this?|Why is this being ignored?|Why the silence?|No one is mentioning this, but...}",
   "{Finally uncovered…|At last revealed…|The truth is out…|No longer hidden…}",
-  "{This might change everything|What comes next is big|This could be the moment|It’s about to shift}",
   "🗓️ {Click before it disappears|Vanishing soon|This won’t last|Here today, gone tomorrow}",
   "{Hidden in plain sight…|Right under your nose|It was here all along|You’ve seen it—but didn’t see it}",
   "🔥 {Only for you – take a look|Exclusively for you – check this out|Just for you – have a look}",
@@ -92,10 +89,8 @@ function subjectFor(seed, content) {
 }
 
 /* ===========================
-   CONTENT LIBRARY (BODY/HEADLINES/etc.)
+   CONTENT LIBRARY
 =========================== */
-const BRAND_DEFAULT = "CASINO BRAND";
-
 const greetings = [
   "Greetings,",
   "Hello,",
@@ -205,15 +200,14 @@ const footerUnsub = [
 ];
 
 const colorSchemes = [
-  // balanced mix: light, dark, colorful accents
-  { name: "Gold Dark", bg: "#0b0b0f", card: "#12121a", text: "#f5f5f7", muted: "#b8b8c3", accent: "#f5c542", accent2: "#d89a1e" },
-  { name: "Ocean Light", bg: "#f5fbff", card: "#ffffff", text: "#0e1a24", muted: "#4a5c6b", accent: "#1aa3ff", accent2: "#0f6fb5" },
-  { name: "Ruby", bg: "#14070a", card: "#1d0a10", text: "#fff5f6", muted: "#e3b8be", accent: "#ff2d55", accent2: "#b30022" },
-  { name: "Mint", bg: "#f3fff9", card: "#ffffff", text: "#0c2b1e", muted: "#3e6b57", accent: "#20c997", accent2: "#0e7d5a" },
-  { name: "Violet", bg: "#0d0618", card: "#150a2a", text: "#fbf7ff", muted: "#cdbcf5", accent: "#a855f7", accent2: "#6d28d9" },
-  { name: "Sunset", bg: "#fff7f0", card: "#ffffff", text: "#2a1608", muted: "#6f4b33", accent: "#ff7a18", accent2: "#ff3d00" },
-  { name: "Steel", bg: "#f7f8fb", card: "#ffffff", text: "#101826", muted: "#54637a", accent: "#334155", accent2: "#0f172a" },
-  { name: "Neon", bg: "#050508", card: "#0b0b12", text: "#f4f4ff", muted: "#9aa0c6", accent: "#22c55e", accent2: "#06b6d4" }
+  { name: "Gold Dark", bg: "#0b0b0f", card: "#12121a", text: "#f5f5f7", muted: "#b8b8c3", accent: "#f5c542" },
+  { name: "Ocean Light", bg: "#f5fbff", card: "#ffffff", text: "#0e1a24", muted: "#4a5c6b", accent: "#1aa3ff" },
+  { name: "Ruby", bg: "#14070a", card: "#1d0a10", text: "#fff5f6", muted: "#e3b8be", accent: "#ff2d55" },
+  { name: "Mint", bg: "#f3fff9", card: "#ffffff", text: "#0c2b1e", muted: "#3e6b57", accent: "#20c997" },
+  { name: "Violet", bg: "#0d0618", card: "#150a2a", text: "#fbf7ff", muted: "#cdbcf5", accent: "#a855f7" },
+  { name: "Sunset", bg: "#fff7f0", card: "#ffffff", text: "#2a1608", muted: "#6f4b33", accent: "#ff7a18" },
+  { name: "Steel", bg: "#f7f8fb", card: "#ffffff", text: "#101826", muted: "#54637a", accent: "#334155" },
+  { name: "Neon", bg: "#050508", card: "#0b0b12", text: "#f4f4ff", muted: "#9aa0c6", accent: "#22c55e" }
 ];
 
 /* ===========================
@@ -242,7 +236,7 @@ function downloadCSV(filename, rows) {
 }
 
 /* ===========================
-   BLOCK RENDERER (VISUAL ENGINE)
+   UI ATOMS
 =========================== */
 function Pill({ text, bg, color }) {
   return (
@@ -252,7 +246,7 @@ function Pill({ text, bg, color }) {
         padding: "6px 10px",
         borderRadius: 999,
         fontSize: 12,
-        fontWeight: 700,
+        fontWeight: 800,
         background: bg,
         color
       }}
@@ -262,16 +256,19 @@ function Pill({ text, bg, color }) {
   );
 }
 
-function Button({ label, href, variant, scheme, shape }) {
+function CTAButton({ label, href, variant, scheme, shape }) {
   const radius = shape === "round" ? 999 : 10;
   const base = {
-    display: "inline-block",
+    display: "block",
+    width: "fit-content",
+    maxWidth: "100%",
     textDecoration: "none",
-    fontWeight: 800,
+    fontWeight: 900,
     fontSize: 14,
-    letterSpacing: 0.2,
-    padding: "12px 16px",
-    borderRadius: radius
+    padding: "13px 18px",
+    borderRadius: radius,
+    margin: "0 auto", // CENTER ALWAYS
+    textAlign: "center"
   };
 
   if (variant === "solid") {
@@ -306,12 +303,13 @@ function Button({ label, href, variant, scheme, shape }) {
     );
   }
 
-  // text
   return (
     <a
       href={href}
       style={{
         ...base,
+        display: "inline-block",
+        margin: "0 auto",
         padding: 0,
         borderRadius: 0,
         color: scheme.accent,
@@ -324,15 +322,13 @@ function Button({ label, href, variant, scheme, shape }) {
   );
 }
 
-function Divider({ scheme, styleType }) {
-  const h = styleType === "thick" ? 3 : 1;
-  const opacity = styleType === "soft" ? 0.18 : 0.35;
+function Divider({ scheme }) {
   return (
     <div
       style={{
-        height: h,
+        height: 1,
         background: scheme.accent,
-        opacity,
+        opacity: 0.25,
         borderRadius: 999,
         margin: "18px 0"
       }}
@@ -340,83 +336,119 @@ function Divider({ scheme, styleType }) {
   );
 }
 
-function StatRow({ scheme, stats }) {
+function Footer({ scheme, brand, footer1, footer2 }) {
+  return (
+    <div style={{ marginTop: 18, paddingTop: 10, textAlign: "center" }}>
+      <Divider scheme={scheme} />
+      <div style={{ fontSize: 11, opacity: 0.9, lineHeight: 1.55 }}>
+        {footer1}
+        <br />
+        {footer2}{" "}
+        <span style={{ textDecoration: "underline", cursor: "pointer" }}>
+          unsubscribe here
+        </span>
+        .
+      </div>
+      <div style={{ fontSize: 11, opacity: 0.75, marginTop: 10, lineHeight: 1.45 }}>
+        © 2026 {brand}. All rights reserved.
+        <br />
+        Please gamble responsibly.
+      </div>
+      <div style={{ fontSize: 11, opacity: 0.6, marginTop: 8 }}>
+        Privacy · Terms · Help
+      </div>
+    </div>
+  );
+}
+
+/* ===========================
+   EMAIL SHELL (600px)
+=========================== */
+function EmailShell({ scheme, children, styleVariant }) {
+  const lightBg = scheme.bg === "#f7f8fb" || scheme.bg === "#f5fbff" || scheme.bg === "#fff7f0" || scheme.bg === "#f3fff9";
+  const radius = styleVariant === "sharp" ? 10 : 22;
+
   return (
     <div
       style={{
-        display: "flex",
-        gap: 10,
-        marginTop: 14,
-        flexWrap: "wrap"
+        background: scheme.bg,
+        padding: 24,
+        minHeight: 520,
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
+        color: scheme.text
       }}
     >
-      {stats.map((s, i) => (
+      <div
+        style={{
+          width: "100%",
+          maxWidth: 600, // LOCKED
+          margin: "0 auto",
+          borderRadius: radius,
+          background: scheme.card,
+          border: lightBg ? "1px solid rgba(0,0,0,0.06)" : "1px solid rgba(255,255,255,0.08)",
+          boxShadow: lightBg ? "0 12px 40px rgba(0,0,0,0.08)" : "0 12px 40px rgba(0,0,0,0.35)",
+          padding: 22
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ===========================
+   CAMPAIGN-AWARE COPY
+=========================== */
+function offerLine1({ depositBonus, freeSpins, game }) {
+  const parts = [];
+  if (depositBonus) parts.push(`Deposit bonus: ${depositBonus}`);
+  if (freeSpins) parts.push(`${freeSpins}${game ? ` on ${game}` : ""}`);
+  if (!parts.length) return "A limited-time reward is now available in your account.";
+  return parts.join(" • ");
+}
+function offerLine2({ depositBonus, freeSpins }) {
+  if (depositBonus && freeSpins) return "Claim both rewards and extend your session instantly.";
+  if (depositBonus) return "Boost your balance and enjoy more flexibility today.";
+  if (freeSpins) return "Enjoy extra playtime with a quick activation.";
+  return "Activate in one click and start playing.";
+}
+function ctaPrimaryLabel({ depositBonus, freeSpins }) {
+  if (depositBonus && freeSpins) return "Claim Bonus + Spins";
+  if (depositBonus) return "Claim Deposit Bonus";
+  if (freeSpins) return "Claim Free Spins";
+  return "Activate Reward";
+}
+
+/* ===========================
+   BLOCKS (SINGLE-COLUMN ONLY)
+=========================== */
+function FeatureStack({ scheme, items }) {
+  const lightBg = scheme.bg === "#f7f8fb" || scheme.bg === "#f5fbff" || scheme.bg === "#fff7f0" || scheme.bg === "#f3fff9";
+  return (
+    <div style={{ marginTop: 10 }}>
+      {items.map((it, i) => (
         <div
           key={i}
           style={{
-            flex: "1 1 140px",
             padding: 12,
             borderRadius: 14,
-            border: `1px solid rgba(255,255,255,0.08)`,
-            background: scheme.bg === "#f7f8fb" || scheme.bg === "#f5fbff" || scheme.bg === "#fff7f0" || scheme.bg === "#f3fff9"
-              ? "rgba(0,0,0,0.03)"
-              : "rgba(255,255,255,0.06)"
+            marginBottom: 10,
+            border: lightBg ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.10)",
+            background: lightBg ? "rgba(0,0,0,0.02)" : "rgba(255,255,255,0.05)"
           }}
         >
-          <div style={{ fontSize: 12, opacity: 0.8 }}>{s.label}</div>
-          <div style={{ fontSize: 18, fontWeight: 900 }}>{s.value}</div>
+          <div style={{ fontSize: 13, fontWeight: 900 }}>{it}</div>
+          <div style={{ fontSize: 12, opacity: 0.82, marginTop: 6 }}>
+            Designed to keep the experience smooth.
+          </div>
         </div>
       ))}
     </div>
   );
 }
 
-function FeatureGrid({ scheme, items, dense }) {
-  const cols = dense ? 2 : 1;
-  return (
-    <table width="100%" cellPadding="0" cellSpacing="0" style={{ marginTop: 10 }}>
-      <tbody>
-        {Array.from({ length: Math.ceil(items.length / cols) }, (_, row) => (
-          <tr key={row}>
-            {Array.from({ length: cols }, (_, col) => {
-              const idx = row * cols + col;
-              const it = items[idx];
-              return (
-                <td key={col} style={{ verticalAlign: "top", padding: "6px 8px" }}>
-                  {it ? (
-                    <div
-                      style={{
-                        borderRadius: 14,
-                        padding: 12,
-                        border:
-                          scheme.bg === "#f7f8fb" || scheme.bg === "#f5fbff" || scheme.bg === "#fff7f0" || scheme.bg === "#f3fff9"
-                            ? "1px solid rgba(0,0,0,0.08)"
-                            : "1px solid rgba(255,255,255,0.10)",
-                        background:
-                          scheme.bg === "#f7f8fb" || scheme.bg === "#f5fbff" || scheme.bg === "#fff7f0" || scheme.bg === "#f3fff9"
-                            ? "rgba(0,0,0,0.02)"
-                            : "rgba(255,255,255,0.05)"
-                      }}
-                    >
-                      <div style={{ fontSize: 13, fontWeight: 800 }}>{it}</div>
-                      <div style={{ fontSize: 12, opacity: 0.8, marginTop: 6 }}>
-                        Designed to keep the experience smooth.
-                      </div>
-                    </div>
-                  ) : null}
-                </td>
-              );
-            })}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
 function PromoBox({ scheme, title, lines }) {
-  const lightBg =
-    scheme.bg === "#f7f8fb" || scheme.bg === "#f5fbff" || scheme.bg === "#fff7f0" || scheme.bg === "#f3fff9";
+  const lightBg = scheme.bg === "#f7f8fb" || scheme.bg === "#f5fbff" || scheme.bg === "#fff7f0" || scheme.bg === "#f3fff9";
   return (
     <div
       style={{
@@ -428,8 +460,8 @@ function PromoBox({ scheme, title, lines }) {
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}>
-        <div style={{ fontWeight: 900 }}>{title}</div>
-        <Pill text="Limited" bg={scheme.accent} color={scheme.bg} />
+        <div style={{ fontWeight: 950 }}>{title}</div>
+        <Pill text="LIMITED" bg={scheme.accent} color={scheme.bg} />
       </div>
       <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
         {lines.map((l, i) => (
@@ -442,430 +474,314 @@ function PromoBox({ scheme, title, lines }) {
   );
 }
 
-function Footer({ scheme, brand, footer1, footer2 }) {
-  const lightBg =
-    scheme.bg === "#f7f8fb" || scheme.bg === "#f5fbff" || scheme.bg === "#fff7f0" || scheme.bg === "#f3fff9";
-  return (
-    <div style={{ marginTop: 18, paddingTop: 14 }}>
-      <Divider scheme={scheme} styleType="soft" />
-      <div style={{ fontSize: 11, opacity: 0.85, lineHeight: 1.45 }}>
-        {footer1}
-        <br />
-        {footer2}{" "}
-        <span style={{ textDecoration: "underline", cursor: "pointer" }}>unsubscribe here</span>.
-      </div>
-      <div style={{ fontSize: 11, opacity: 0.75, marginTop: 10 }}>
-        © 2026 {brand}. All rights reserved.
-        <br />
-        Please gamble responsibly.
-      </div>
-      {!lightBg ? (
-        <div style={{ fontSize: 11, opacity: 0.55, marginTop: 8 }}>
-          Privacy · Terms · Help
-        </div>
-      ) : (
-        <div style={{ fontSize: 11, opacity: 0.6, marginTop: 8 }}>
-          Privacy · Terms · Help
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ===========================
-   EMAIL SHELL
-=========================== */
-function EmailShell({ scheme, children, styleVariant }) {
-  const lightBg =
-    scheme.bg === "#f7f8fb" || scheme.bg === "#f5fbff" || scheme.bg === "#fff7f0" || scheme.bg === "#f3fff9";
-
-  const radius = styleVariant === "sharp" ? 10 : 22;
-
-  return (
-    <div
-      style={{
-        background: scheme.bg,
-        padding: 24,
-        minHeight: 520,
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
-        color: scheme.text
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 640,
-          margin: "0 auto",
-          borderRadius: radius,
-          background: scheme.card,
-          border: lightBg ? "1px solid rgba(0,0,0,0.06)" : "1px solid rgba(255,255,255,0.08)",
-          boxShadow: lightBg
-            ? "0 12px 40px rgba(0,0,0,0.08)"
-            : "0 12px 40px rgba(0,0,0,0.35)",
-          padding: 22
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-/* ===========================
-   BLOCK COMPOSER (COHERENT RANDOMNESS)
-=========================== */
-function buildBlocks({ r, scheme, content }) {
-  const emojiAllowed = r() > 0.75; // occasional, restrained
-  const dense = r() > 0.6;
-
-  const ctaShape = r() > 0.5 ? "round" : "square";
-  const ctaVariantPrimary = r() > 0.5 ? "solid" : "outline";
-  const ctaVariantSecondary = r() > 0.6 ? "outline" : "text";
+function CenteredCTAGroup({ scheme, campaign, r }) {
+  const shape = r() > 0.5 ? "round" : "square";
+  const primaryVariant = r() > 0.5 ? "solid" : "outline";
+  const secondaryVariant = r() > 0.65 ? "outline" : "text";
   const twoCTAs = r() > 0.55;
 
-  const badges = ["VIP", "EXCLUSIVE", "LIMITED", "NEW", "PRIORITY"];
-  const badge = pickSeeded(badges, r);
-
-  const heroStyle = r() > 0.55 ? "big" : "standard";
-  const dividerStyle = pickSeeded(["soft", "thin", "thick"], r);
-
-  const stats = [
-    { label: "Reward", value: pickSeeded(["+50% Value", "Extra Spins", "Bonus Boost", "VIP Perk"], r) },
-    { label: "Activation", value: pickSeeded(["Instant", "1-Click", "Auto-ready", "No hassle"], r) },
-    { label: "Window", value: pickSeeded(["Limited", "Short run", "Today", "This week"], r) }
-  ];
-
-  const blocks = [];
-
-  // Header / branding block
-  blocks.push({
-    type: "brand",
-    render: () => (
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
-        <div style={{ fontWeight: 900, letterSpacing: 1.2, fontSize: 12, opacity: 0.9 }}>
-          {content.brand}
-        </div>
-        <Pill text={badge} bg={scheme.accent} color={scheme.bg} />
-      </div>
-    )
-  });
-
-  // Hero block
-  blocks.push({
-    type: "hero",
-    render: () => (
-      <div style={{ marginTop: 16 }}>
-        <div style={{ fontSize: heroStyle === "big" ? 28 : 22, fontWeight: 950, letterSpacing: 0.2, lineHeight: 1.08 }}>
-          {content.headline}
-        </div>
-        <div style={{ marginTop: 10, fontSize: 14, opacity: 0.9 }}>
-          {emojiAllowed ? "✨ " : ""}{content.subheadline}
-        </div>
-      </div>
-    )
-  });
-
-  // Editorial intro block (optional)
-  if (r() > 0.35) {
-    blocks.push({
-      type: "editorialIntro",
-      render: () => (
-        <div style={{ marginTop: 14, fontSize: 14, lineHeight: 1.6, opacity: 0.92 }}>
-          <strong style={{ display: "block", marginBottom: 6 }}>{content.greeting}</strong>
-          <span style={{ opacity: 0.95 }}>{content.body[0]}</span>
-        </div>
-      )
-    });
-  }
-
-  // Divider (optional)
-  if (r() > 0.45) {
-    blocks.push({
-      type: "divider",
-      render: () => <Divider scheme={scheme} styleType={dividerStyle} />
-    });
-  }
-
-  // Promo box (optional)
-  if (r() > 0.25) {
-    blocks.push({
-      type: "promoBox",
-      render: () => (
-        <PromoBox
-          scheme={scheme}
-          title={pickSeeded(["Offer details", "What you get", "Reward summary", "Unlocked perks"], r)}
-          lines={pickManySeeded(
-            [
-              content.body[1] || "Everything is ready whenever you are.",
-              content.body[2] || "Make the most of it while it’s live.",
-              "Activate in your account and start immediately.",
-              "Available across eligible games and sessions."
-            ],
-            r,
-            3
-          )}
-        />
-      )
-    });
-  }
-
-  // Stats row (optional)
-  if (r() > 0.5) {
-    blocks.push({
-      type: "stats",
-      render: () => <StatRow scheme={scheme} stats={dense ? stats.slice(0, 2) : stats} />
-    });
-  }
-
-  // Features (almost always)
-  blocks.push({
-    type: "features",
-    render: () => (
-      <div style={{ marginTop: 16 }}>
-        <div style={{ fontWeight: 900 }}>{content.featureTitle}</div>
-        <FeatureGrid scheme={scheme} items={content.features} dense={dense} />
-      </div>
-    )
-  });
-
-  // CTA block
-  blocks.push({
-    type: "cta",
-    render: () => (
-      <div style={{ marginTop: 18 }}>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-          <Button
-            label={pickSeeded(["Activate Reward", "Claim Now", "Unlock Offer", "Start Playing"], r)}
+  return (
+    <div style={{ marginTop: 18, textAlign: "center" }}>
+      <CTAButton
+        label={ctaPrimaryLabel(campaign)}
+        href="#"
+        variant={primaryVariant}
+        scheme={scheme}
+        shape={shape}
+      />
+      {twoCTAs ? (
+        <div style={{ marginTop: 10 }}>
+          <CTAButton
+            label={pickSeeded(["View Details", "See Eligible Games", "Learn More"], r)}
             href="#"
-            variant={ctaVariantPrimary}
+            variant={secondaryVariant}
             scheme={scheme}
-            shape={ctaShape}
+            shape={shape === "round" ? "square" : "round"}
           />
-          {twoCTAs ? (
-            <Button
-              label={pickSeeded(["View Details", "See Eligible Games", "Learn More"], r)}
-              href="#"
-              variant={ctaVariantSecondary}
-              scheme={scheme}
-              shape={ctaShape === "round" ? "square" : "round"}
-            />
-          ) : null}
         </div>
-        <div style={{ marginTop: 10, fontSize: 12, opacity: 0.82 }}>
-          {pickSeeded(
-            [
-              "No extra steps. Simple activation.",
-              "Limited window. Don’t leave it sitting.",
-              "Designed to fit seamlessly into your play.",
-              "Use it when it suits you."
-            ],
-            r
-          )}
-        </div>
+      ) : null}
+      <div style={{ marginTop: 10, fontSize: 12, opacity: 0.82 }}>
+        {pickSeeded(
+          [
+            "Limited window. Don’t leave it sitting.",
+            "No extra steps. Simple activation.",
+            "Designed to fit seamlessly into your play.",
+            "Use it when it suits you."
+          ],
+          r
+        )}
       </div>
-    )
-  });
+    </div>
+  );
+}
 
-  // Closing
-  blocks.push({
-    type: "closing",
-    render: () => (
+/* ===========================
+   10 DISTINCT (SINGLE-COLUMN) LAYOUTS
+=========================== */
+function LayoutA({ scheme, content, campaign, r }) {
+  return (
+    <EmailShell scheme={scheme} styleVariant="round">
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+        <div style={{ fontWeight: 950, letterSpacing: 1.2, fontSize: 12, opacity: 0.9 }}>{content.brand}</div>
+        <Pill text={pickSeeded(["VIP", "NEW", "LIMITED", "PRIORITY"], r)} bg={scheme.accent} color={scheme.bg} />
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <div style={{ fontSize: 24, fontWeight: 980, lineHeight: 1.08 }}>{content.headline}</div>
+        <div style={{ marginTop: 10, fontSize: 14, opacity: 0.9 }}>{content.subheadline}</div>
+      </div>
+
+      <div style={{ marginTop: 14, fontSize: 14, lineHeight: 1.6, opacity: 0.94 }}>
+        <strong style={{ display: "block", marginBottom: 6 }}>{content.greeting}</strong>
+        <div>{offerLine1(campaign)}</div>
+        <div style={{ marginTop: 10 }}>{content.body[0]}</div>
+      </div>
+
+      <PromoBox
+        scheme={scheme}
+        title={pickSeeded(["Offer details", "Reward summary", "What you get"], r)}
+        lines={[
+          offerLine2(campaign),
+          content.body[1],
+          campaign.game ? `Try it on ${campaign.game} and explore more.` : content.body[2]
+        ].filter(Boolean)}
+      />
+
+      <div style={{ marginTop: 16, fontWeight: 950 }}>{content.featureTitle}</div>
+      <FeatureStack scheme={scheme} items={content.features} />
+
+      <CenteredCTAGroup scheme={scheme} campaign={campaign} r={r} />
+
       <div style={{ marginTop: 16, fontSize: 13, opacity: 0.92 }}>
         <strong>{content.closing}</strong>
       </div>
-    )
-  });
 
-  // Footer
-  blocks.push({
-    type: "footer",
-    render: () => (
-      <Footer
+      <Footer scheme={scheme} brand={content.brand} footer1={content.footer1} footer2={content.footer2} />
+    </EmailShell>
+  );
+}
+
+function LayoutB({ scheme, content, campaign, r }) {
+  return (
+    <EmailShell scheme={scheme} styleVariant="sharp">
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontWeight: 950, letterSpacing: 1.2, fontSize: 12, opacity: 0.9 }}>{content.brand}</div>
+        <div style={{ marginTop: 10, fontSize: 28, fontWeight: 1000, lineHeight: 1.05 }}>{content.headline}</div>
+        <div style={{ marginTop: 8, fontSize: 14, opacity: 0.88 }}>{content.subheadline}</div>
+      </div>
+
+      <Divider scheme={scheme} />
+
+      <div style={{ fontSize: 14, lineHeight: 1.6, opacity: 0.94 }}>
+        <strong style={{ display: "block", marginBottom: 6 }}>{content.greeting}</strong>
+        <div>{offerLine1(campaign)}</div>
+        <div style={{ marginTop: 10 }}>{content.body[0]}</div>
+        <div style={{ marginTop: 10 }}>{content.body[1]}</div>
+      </div>
+
+      <CenteredCTAGroup scheme={scheme} campaign={campaign} r={r} />
+
+      <div style={{ marginTop: 16, fontWeight: 950 }}>{content.featureTitle}</div>
+      <FeatureStack scheme={scheme} items={content.features} />
+
+      <div style={{ marginTop: 16, fontSize: 13, opacity: 0.92 }}>
+        <strong>{content.closing}</strong>
+      </div>
+
+      <Footer scheme={scheme} brand={content.brand} footer1={content.footer1} footer2={content.footer2} />
+    </EmailShell>
+  );
+}
+
+function LayoutC({ scheme, content, campaign, r }) {
+  return (
+    <EmailShell scheme={scheme} styleVariant="round">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+        <div style={{ fontWeight: 950, letterSpacing: 1.2, fontSize: 12, opacity: 0.9 }}>{content.brand}</div>
+        <Pill text="LIMITED" bg={scheme.accent} color={scheme.bg} />
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <div style={{ fontSize: 22, fontWeight: 980 }}>{content.headline}</div>
+        <div style={{ marginTop: 10, fontSize: 14, opacity: 0.9 }}>✨ {content.subheadline}</div>
+      </div>
+
+      <PromoBox
         scheme={scheme}
-        brand={content.brand}
-        footer1={content.footer1}
-        footer2={content.footer2}
+        title="Highlights"
+        lines={[
+          offerLine1(campaign),
+          offerLine2(campaign),
+          campaign.freeSpins ? "Free spins are subject to eligible games." : "Rewards are subject to eligibility."
+        ].filter(Boolean)}
       />
-    )
-  });
 
-  return blocks;
-}
-
-/* ===========================
-   10 DISTINCT LAYOUT WRAPPERS
-   (Balanced mix: promo + editorial + magazine + newsletter vibes)
-=========================== */
-function LayoutClassic({ scheme, blocks }) {
-  return (
-    <EmailShell scheme={scheme} styleVariant="round">
-      {blocks.map((b, i) => <div key={i}>{b.render()}</div>)}
-    </EmailShell>
-  );
-}
-
-function LayoutVIP({ scheme, blocks }) {
-  return (
-    <EmailShell scheme={scheme} styleVariant="round">
-      <div style={{ borderRadius: 18, padding: 16, border: `1px solid rgba(255,255,255,0.10)`, background: "rgba(255,255,255,0.04)" }}>
-        {blocks.map((b, i) => <div key={i}>{b.render()}</div>)}
+      <div style={{ marginTop: 14, fontSize: 14, lineHeight: 1.6, opacity: 0.94 }}>
+        <strong style={{ display: "block", marginBottom: 6 }}>{content.greeting}</strong>
+        <div>{content.body[0]}</div>
+        <div style={{ marginTop: 10 }}>{content.body[2]}</div>
       </div>
+
+      <CenteredCTAGroup scheme={scheme} campaign={campaign} r={r} />
+
+      <div style={{ marginTop: 16, fontWeight: 950 }}>{content.featureTitle}</div>
+      <FeatureStack scheme={scheme} items={content.features} />
+
+      <div style={{ marginTop: 16, fontSize: 13, opacity: 0.92 }}>
+        <strong>{content.closing}</strong>
+      </div>
+
+      <Footer scheme={scheme} brand={content.brand} footer1={content.footer1} footer2={content.footer2} />
     </EmailShell>
   );
 }
 
-function LayoutModernCard({ scheme, blocks }) {
+function LayoutD({ scheme, content, campaign, r }) {
+  // newsletter style: section rhythm
+  return (
+    <EmailShell scheme={scheme} styleVariant="round">
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontWeight: 950, letterSpacing: 1.2, fontSize: 12, opacity: 0.9 }}>{content.brand}</div>
+        <div style={{ marginTop: 10, fontSize: 24, fontWeight: 1000 }}>{content.headline}</div>
+        <div style={{ marginTop: 8, fontSize: 14, opacity: 0.9 }}>{content.subheadline}</div>
+      </div>
+
+      <Divider scheme={scheme} />
+
+      <div style={{ fontSize: 14, lineHeight: 1.6, opacity: 0.94 }}>
+        <strong style={{ display: "block", marginBottom: 6 }}>{content.greeting}</strong>
+        <div>{offerLine1(campaign)}</div>
+        <div style={{ marginTop: 10 }}>{content.body[0]}</div>
+      </div>
+
+      <Divider scheme={scheme} />
+
+      <PromoBox
+        scheme={scheme}
+        title={pickSeeded(["Today’s reward", "This week’s perk", "Unlocked benefit"], r)}
+        lines={[offerLine2(campaign), content.body[1], content.body[2]].filter(Boolean)}
+      />
+
+      <Divider scheme={scheme} />
+
+      <div style={{ marginTop: 6, fontWeight: 950 }}>{content.featureTitle}</div>
+      <FeatureStack scheme={scheme} items={content.features} />
+
+      <CenteredCTAGroup scheme={scheme} campaign={campaign} r={r} />
+
+      <Footer scheme={scheme} brand={content.brand} footer1={content.footer1} footer2={content.footer2} />
+    </EmailShell>
+  );
+}
+
+function LayoutE({ scheme, content, campaign, r }) {
+  // editorial lean
   return (
     <EmailShell scheme={scheme} styleVariant="sharp">
-      <div style={{ padding: 16, borderRadius: 14, background: "transparent" }}>
-        {blocks.map((b, i) => <div key={i}>{b.render()}</div>)}
+      <div style={{ fontSize: 12, letterSpacing: 1.2, opacity: 0.85, textAlign: "center" }}>
+        EDITORIAL
       </div>
+
+      <div style={{ marginTop: 10, textAlign: "center" }}>
+        <div style={{ fontWeight: 950, letterSpacing: 1.2, fontSize: 12, opacity: 0.9 }}>{content.brand}</div>
+        <div style={{ marginTop: 10, fontSize: 26, fontWeight: 1000, lineHeight: 1.06 }}>{content.headline}</div>
+        <div style={{ marginTop: 8, fontSize: 14, opacity: 0.9 }}>{content.subheadline}</div>
+      </div>
+
+      <div style={{ marginTop: 14, fontSize: 14, lineHeight: 1.65, opacity: 0.94 }}>
+        <strong style={{ display: "block", marginBottom: 6 }}>{content.greeting}</strong>
+        <div>{content.body[0]}</div>
+        <div style={{ marginTop: 12, fontWeight: 900 }}>{offerLine1(campaign)}</div>
+        <div style={{ marginTop: 12 }}>{content.body[1]}</div>
+      </div>
+
+      <CenteredCTAGroup scheme={scheme} campaign={campaign} r={r} />
+
+      <Footer scheme={scheme} brand={content.brand} footer1={content.footer1} footer2={content.footer2} />
     </EmailShell>
   );
 }
 
-function LayoutSplit({ scheme, blocks }) {
-  // split feel: hero on left, details on right (table-based)
-  const left = blocks.slice(0, 3);
-  const right = blocks.slice(3);
+function LayoutF({ scheme, content, campaign, r }) {
+  // magazine blocks without columns
   return (
     <EmailShell scheme={scheme} styleVariant="round">
-      <table width="100%" cellPadding="0" cellSpacing="0">
-        <tbody>
-          <tr>
-            <td width="45%" style={{ verticalAlign: "top", paddingRight: 10 }}>
-              {left.map((b, i) => <div key={i}>{b.render()}</div>)}
-            </td>
-            <td width="55%" style={{ verticalAlign: "top", paddingLeft: 10 }}>
-              {right.map((b, i) => <div key={i}>{b.render()}</div>)}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+        <div style={{ fontWeight: 950, letterSpacing: 1.2, fontSize: 12, opacity: 0.9 }}>{content.brand}</div>
+        <Pill text={pickSeeded(["NEW", "VIP", "LIMITED"], r)} bg={scheme.accent} color={scheme.bg} />
+      </div>
+
+      <div style={{ marginTop: 16, padding: 14, borderRadius: 16, background: "rgba(255,255,255,0.05)" }}>
+        <div style={{ fontSize: 24, fontWeight: 1000 }}>{content.headline}</div>
+        <div style={{ marginTop: 8, fontSize: 14, opacity: 0.9 }}>{content.subheadline}</div>
+        <div style={{ marginTop: 10, fontSize: 13, opacity: 0.9 }}>{offerLine1(campaign)}</div>
+      </div>
+
+      <PromoBox scheme={scheme} title="What to do next" lines={[offerLine2(campaign), content.body[2], content.body[1]].filter(Boolean)} />
+
+      <div style={{ marginTop: 16, fontWeight: 950 }}>{content.featureTitle}</div>
+      <FeatureStack scheme={scheme} items={content.features} />
+
+      <CenteredCTAGroup scheme={scheme} campaign={campaign} r={r} />
+
+      <Footer scheme={scheme} brand={content.brand} footer1={content.footer1} footer2={content.footer2} />
     </EmailShell>
   );
 }
 
-function LayoutMinimal({ scheme, blocks }) {
-  // fewer blocks shown for minimal layout
-  const keep = blocks.filter((b) => ["brand", "hero", "features", "cta", "footer"].includes(b.type));
+function LayoutG({ scheme, content, campaign, r }) {
+  // coupon/ticket style single column
   return (
     <EmailShell scheme={scheme} styleVariant="sharp">
-      {keep.map((b, i) => <div key={i}>{b.render()}</div>)}
-    </EmailShell>
-  );
-}
+      <div style={{ border: `2px dashed ${scheme.accent}`, borderRadius: 18, padding: 16 }}>
+        <div style={{ textAlign: "center", fontWeight: 1000, marginBottom: 8 }}>🎟️ REWARD TICKET</div>
+        <div style={{ textAlign: "center", fontWeight: 950, letterSpacing: 1.2, fontSize: 12, opacity: 0.9 }}>{content.brand}</div>
+        <div style={{ marginTop: 10, textAlign: "center", fontSize: 24, fontWeight: 1000 }}>{content.headline}</div>
+        <div style={{ marginTop: 8, textAlign: "center", fontSize: 14, opacity: 0.9 }}>{content.subheadline}</div>
 
-function LayoutNewsletter({ scheme, blocks }) {
-  // newsletter: sections separated with dividers
-  const sections = blocks.map((b) => ({
-    ...b,
-    renderWrapped: () => (
-      <div style={{ padding: "10px 0" }}>
-        {b.render()}
-      </div>
-    )
-  }));
-  return (
-    <EmailShell scheme={scheme} styleVariant="round">
-      {sections.map((b, i) => (
-        <div key={i}>
-          {b.renderWrapped()}
-          {i < sections.length - 1 ? <Divider scheme={scheme} styleType="soft" /> : null}
+        <Divider scheme={scheme} />
+
+        <div style={{ fontSize: 14, lineHeight: 1.6, opacity: 0.94 }}>
+          <strong style={{ display: "block", marginBottom: 6 }}>{content.greeting}</strong>
+          <div>{offerLine1(campaign)}</div>
+          <div style={{ marginTop: 10 }}>{content.body[0]}</div>
         </div>
-      ))}
-    </EmailShell>
-  );
-}
 
-function LayoutEditorial({ scheme, blocks }) {
-  // editorial: hero + paragraphs more prominent
-  const brand = blocks.find((b) => b.type === "brand");
-  const hero = blocks.find((b) => b.type === "hero");
-  const intro = blocks.find((b) => b.type === "editorialIntro");
-  const promo = blocks.find((b) => b.type === "promoBox");
-  const features = blocks.find((b) => b.type === "features");
-  const cta = blocks.find((b) => b.type === "cta");
-  const footer = blocks.find((b) => b.type === "footer");
+        <CenteredCTAGroup scheme={scheme} campaign={campaign} r={r} />
 
-  return (
-    <EmailShell scheme={scheme} styleVariant="sharp">
-      <div style={{ fontSize: 12, letterSpacing: 1.2, opacity: 0.85 }}>EDITORIAL</div>
-      {brand?.render()}
-      {hero?.render()}
-      {intro?.render()}
-      {promo?.render()}
-      {features?.render()}
-      {cta?.render()}
-      {footer?.render()}
-    </EmailShell>
-  );
-}
-
-function LayoutMagazine({ scheme, blocks }) {
-  // magazine: big hero + “tiles”
-  const tiles = blocks.filter((b) => ["promoBox", "stats", "features"].includes(b.type));
-  const header = blocks.filter((b) => ["brand", "hero"].includes(b.type));
-  const tail = blocks.filter((b) => ["cta", "footer"].includes(b.type));
-
-  return (
-    <EmailShell scheme={scheme} styleVariant="round">
-      {header.map((b, i) => <div key={i}>{b.render()}</div>)}
-      <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
-        {tiles.map((b, i) => (
-          <div key={i} style={{ borderRadius: 16, padding: 12, border: "1px solid rgba(255,255,255,0.10)", background: "rgba(255,255,255,0.04)" }}>
-            {b.render()}
-          </div>
-        ))}
-      </div>
-      {tail.map((b, i) => <div key={i}>{b.render()}</div>)}
-    </EmailShell>
-  );
-}
-
-function LayoutCoupon({ scheme, blocks }) {
-  // coupon: “ticket” style border
-  const inner = blocks.filter((b) => b.type !== "divider");
-  return (
-    <EmailShell scheme={scheme} styleVariant="sharp">
-      <div
-        style={{
-          border: `2px dashed ${scheme.accent}`,
-          borderRadius: 18,
-          padding: 16
-        }}
-      >
-        <div style={{ fontWeight: 900, marginBottom: 8 }}>
-          {pickSeeded(["YOUR TICKET", "REWARD PASS", "PROMO COUPON", "VIP ENTRY"], mulberry32(999))} 🎟️
-        </div>
-        {inner.map((b, i) => <div key={i}>{b.render()}</div>)}
+        <Footer scheme={scheme} brand={content.brand} footer1={content.footer1} footer2={content.footer2} />
       </div>
     </EmailShell>
   );
 }
 
-function LayoutTimeline({ scheme, blocks, r }) {
-  // timeline: stage list + CTA + footer
-  const brand = blocks.find((b) => b.type === "brand");
-  const hero = blocks.find((b) => b.type === "hero");
-  const cta = blocks.find((b) => b.type === "cta");
-  const footer = blocks.find((b) => b.type === "footer");
-
+function LayoutH({ scheme, content, campaign, r }) {
+  // timeline single column
   const stages = [
     { t: "Stage 1", d: pickSeeded(["Activate the reward", "Open your account", "Confirm eligibility"], r) },
-    { t: "Stage 2", d: pickSeeded(["Choose eligible games", "Start your session", "Use the added value"], r) },
-    { t: "Stage 3", d: pickSeeded(["Keep playing your way", "Enjoy extended play", "Maximise the experience"], r) }
+    { t: "Stage 2", d: pickSeeded(["Start your session", "Choose eligible games", "Use the added value"], r) },
+    { t: "Stage 3", d: pickSeeded(["Enjoy extended play", "Maximise the experience", "Keep playing your way"], r) }
   ];
-
-  const lightBg =
-    scheme.bg === "#f7f8fb" || scheme.bg === "#f5fbff" || scheme.bg === "#fff7f0" || scheme.bg === "#f3fff9";
+  const lightBg = scheme.bg === "#f7f8fb" || scheme.bg === "#f5fbff" || scheme.bg === "#fff7f0" || scheme.bg === "#f3fff9";
 
   return (
     <EmailShell scheme={scheme} styleVariant="round">
-      {brand?.render()}
-      {hero?.render()}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+        <div style={{ fontWeight: 950, letterSpacing: 1.2, fontSize: 12, opacity: 0.9 }}>{content.brand}</div>
+        <Pill text="NEW" bg={scheme.accent} color={scheme.bg} />
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <div style={{ fontSize: 24, fontWeight: 1000 }}>{content.headline}</div>
+        <div style={{ marginTop: 8, fontSize: 14, opacity: 0.9 }}>✨ {content.subheadline}</div>
+      </div>
+
+      <div style={{ marginTop: 12, fontSize: 13, opacity: 0.92, fontWeight: 900, textAlign: "center" }}>
+        {offerLine1(campaign)}
+      </div>
+
       <div style={{ marginTop: 14 }}>
-        <div style={{ fontWeight: 900, marginBottom: 8 }}>How it works</div>
+        <div style={{ fontWeight: 950, marginBottom: 10 }}>How it works</div>
         {stages.map((s, i) => (
           <div
             key={i}
@@ -879,13 +795,69 @@ function LayoutTimeline({ scheme, blocks, r }) {
               background: lightBg ? "rgba(0,0,0,0.02)" : "rgba(255,255,255,0.05)"
             }}
           >
-            <div style={{ fontWeight: 900, color: scheme.accent, minWidth: 78 }}>{s.t}</div>
-            <div style={{ opacity: 0.9 }}>{s.d}</div>
+            <div style={{ fontWeight: 1000, color: scheme.accent, minWidth: 78 }}>{s.t}</div>
+            <div style={{ opacity: 0.92 }}>{s.d}</div>
           </div>
         ))}
       </div>
-      {cta?.render()}
-      {footer?.render()}
+
+      <CenteredCTAGroup scheme={scheme} campaign={campaign} r={r} />
+
+      <Footer scheme={scheme} brand={content.brand} footer1={content.footer1} footer2={content.footer2} />
+    </EmailShell>
+  );
+}
+
+function LayoutI({ scheme, content, campaign, r }) {
+  // minimalist premium single column
+  return (
+    <EmailShell scheme={scheme} styleVariant="sharp">
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontWeight: 950, letterSpacing: 1.2, fontSize: 12, opacity: 0.9 }}>{content.brand}</div>
+        <div style={{ marginTop: 14, fontSize: 22, fontWeight: 1000 }}>{content.headline}</div>
+        <div style={{ marginTop: 8, fontSize: 14, opacity: 0.9 }}>{content.subheadline}</div>
+      </div>
+
+      <div style={{ marginTop: 14, fontSize: 14, lineHeight: 1.65, opacity: 0.94, textAlign: "center" }}>
+        <div style={{ fontWeight: 900 }}>{offerLine1(campaign)}</div>
+        <div style={{ marginTop: 10 }}>{offerLine2(campaign)}</div>
+      </div>
+
+      <CenteredCTAGroup scheme={scheme} campaign={campaign} r={r} />
+
+      <Footer scheme={scheme} brand={content.brand} footer1={content.footer1} footer2={content.footer2} />
+    </EmailShell>
+  );
+}
+
+function LayoutJ({ scheme, content, campaign, r }) {
+  // “promo poster” style single column
+  return (
+    <EmailShell scheme={scheme} styleVariant="round">
+      <div style={{ textAlign: "center" }}>
+        <Pill text={pickSeeded(["EXCLUSIVE", "VIP", "LIMITED"], r)} bg={scheme.accent} color={scheme.bg} />
+        <div style={{ marginTop: 10, fontWeight: 950, letterSpacing: 1.2, fontSize: 12, opacity: 0.9 }}>{content.brand}</div>
+        <div style={{ marginTop: 14, fontSize: 30, fontWeight: 1000, lineHeight: 1.02 }}>{content.headline}</div>
+        <div style={{ marginTop: 10, fontSize: 14, opacity: 0.9 }}>✨ {content.subheadline}</div>
+      </div>
+
+      <PromoBox
+        scheme={scheme}
+        title="Your reward"
+        lines={[
+          offerLine1(campaign),
+          offerLine2(campaign),
+          content.body[2]
+        ].filter(Boolean)}
+      />
+
+      <CenteredCTAGroup scheme={scheme} campaign={campaign} r={r} />
+
+      <div style={{ marginTop: 16, fontSize: 13, opacity: 0.92, textAlign: "center" }}>
+        <strong>{pickSeeded(closings, r)}</strong>
+      </div>
+
+      <Footer scheme={scheme} brand={content.brand} footer1={content.footer1} footer2={content.footer2} />
     </EmailShell>
   );
 }
@@ -900,7 +872,22 @@ export default function AdvancedEmailGenerator() {
   const [subjects, setSubjects] = useState([]);
   const [isBatching, setIsBatching] = useState(false);
 
-  // deterministic per template index
+  // Campaign controls (GLOBAL)
+  const [brand, setBrand] = useState("CASINO BRAND");
+  const [depositBonus, setDepositBonus] = useState("");
+  const [freeSpins, setFreeSpins] = useState("");
+  const [game, setGame] = useState("");
+
+  const campaign = useMemo(
+    () => ({
+      brand: brand?.trim() || "CASINO BRAND",
+      depositBonus: depositBonus?.trim(),
+      freeSpins: freeSpins?.trim(),
+      game: game?.trim()
+    }),
+    [brand, depositBonus, freeSpins, game]
+  );
+
   const content = useMemo(() => {
     const r = mulberry32(index * 10007 + 42);
     const scheme = pickSeeded(colorSchemes, r);
@@ -908,7 +895,7 @@ export default function AdvancedEmailGenerator() {
 
     return {
       seed: index,
-      brand: BRAND_DEFAULT,
+      brand: campaign.brand,
       scheme,
       greeting: pickSeeded(greetings, r),
       headline: pickSeeded(headlines, r),
@@ -920,25 +907,23 @@ export default function AdvancedEmailGenerator() {
       footer1: pickSeeded(footerPromo, r),
       footer2: pickSeeded(footerUnsub, r)
     };
-  }, [index]);
+  }, [index, campaign.brand]);
 
-  const blocks = useMemo(() => {
-    const r = mulberry32(index * 7777 + 99);
-    return buildBlocks({ r, scheme: content.scheme, content });
-  }, [index, content]);
-
-  const layouts = useMemo(() => ([
-    (props) => <LayoutClassic {...props} />,
-    (props) => <LayoutVIP {...props} />,
-    (props) => <LayoutModernCard {...props} />,
-    (props) => <LayoutSplit {...props} />,
-    (props) => <LayoutMinimal {...props} />,
-    (props) => <LayoutNewsletter {...props} />,
-    (props) => <LayoutEditorial {...props} />,
-    (props) => <LayoutMagazine {...props} />,
-    (props) => <LayoutCoupon {...props} />,
-    (props) => <LayoutTimeline {...props} r={mulberry32(index * 3333 + 7)} />
-  ]), [index]);
+  const layouts = useMemo(
+    () => [
+      LayoutA,
+      LayoutB,
+      LayoutC,
+      LayoutD,
+      LayoutE,
+      LayoutF,
+      LayoutG,
+      LayoutH,
+      LayoutI,
+      LayoutJ
+    ],
+    []
+  );
 
   const Layout = layouts[index % layouts.length];
 
@@ -997,28 +982,81 @@ export default function AdvancedEmailGenerator() {
     setIsBatching(false);
   };
 
+  const rUI = useMemo(() => mulberry32(index * 7777 + 99), [index]);
+
   return (
     <div style={{ padding: 20 }}>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-        <button disabled={isBatching} onClick={() => setIndex((i) => Math.max(0, i - 1))}>Prev</button>
-        <button disabled={isBatching} onClick={() => setIndex((i) => i + 1)}>Next</button>
+      {/* Campaign Controls */}
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          flexWrap: "wrap",
+          alignItems: "flex-end",
+          marginBottom: 14
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4 }}>Brand Name</div>
+          <input
+            value={brand}
+            onChange={(e) => setBrand(e.target.value)}
+            style={{ padding: 8, width: 220 }}
+            placeholder="CASINO BRAND"
+          />
+        </div>
 
-        <button disabled={isBatching} onClick={downloadCurrentImage}>Download Image</button>
-        <button disabled={isBatching} onClick={download10Images}>Download 10 Images</button>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4 }}>Deposit Bonus</div>
+          <input
+            value={depositBonus}
+            onChange={(e) => setDepositBonus(e.target.value)}
+            style={{ padding: 8, width: 220 }}
+            placeholder="e.g. 100% up to €500"
+          />
+        </div>
 
-        <button disabled={isBatching} onClick={generateSubjects}>Generate 100 Subjects</button>
-        <button disabled={!subjects.length || isBatching} onClick={exportSubjectsTXT}>Export TXT</button>
-        <button disabled={!subjects.length || isBatching} onClick={exportSubjectsCSV}>Export CSV</button>
-        <button disabled={!subjects.length || isBatching} onClick={exportSheetsIndexCSV}>Sheets Index CSV</button>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4 }}>Free Spins</div>
+          <input
+            value={freeSpins}
+            onChange={(e) => setFreeSpins(e.target.value)}
+            style={{ padding: 8, width: 160 }}
+            placeholder="e.g. 50 Free Spins"
+          />
+        </div>
 
-        <span style={{ marginLeft: 10, opacity: 0.7 }}>
-          Template #{index + 1} (Layout {(index % 10) + 1}) · Scheme: {content.scheme.name}
-        </span>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 4 }}>Game (optional)</div>
+          <input
+            value={game}
+            onChange={(e) => setGame(e.target.value)}
+            style={{ padding: 8, width: 160 }}
+            placeholder="e.g. Starburst"
+          />
+        </div>
+
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button disabled={isBatching} onClick={() => setIndex((i) => Math.max(0, i - 1))}>Prev</button>
+          <button disabled={isBatching} onClick={() => setIndex((i) => i + 1)}>Next</button>
+
+          <button disabled={isBatching} onClick={downloadCurrentImage}>Download Image</button>
+          <button disabled={isBatching} onClick={download10Images}>Download 10 Images</button>
+
+          <button disabled={isBatching} onClick={generateSubjects}>Generate 100 Subjects</button>
+          <button disabled={!subjects.length || isBatching} onClick={exportSubjectsTXT}>Export TXT</button>
+          <button disabled={!subjects.length || isBatching} onClick={exportSubjectsCSV}>Export CSV</button>
+          <button disabled={!subjects.length || isBatching} onClick={exportSheetsIndexCSV}>Sheets Index CSV</button>
+        </div>
+      </div>
+
+      <div style={{ opacity: 0.7, marginBottom: 10 }}>
+        Template #{index + 1} (Layout {(index % 10) + 1}) · Scheme: {content.scheme.name}
       </div>
 
       {subjects.length > 0 && (
         <div style={{ marginTop: 14, maxWidth: 980 }}>
-          <div style={{ fontWeight: 800, marginBottom: 6 }}>Subjects (first 12 shown)</div>
+          <div style={{ fontWeight: 900, marginBottom: 6 }}>Subjects (first 12 shown)</div>
           <ol style={{ marginTop: 0 }}>
             {subjects.slice(0, 12).map((s, i) => <li key={i}>{s}</li>)}
           </ol>
@@ -1026,7 +1064,12 @@ export default function AdvancedEmailGenerator() {
       )}
 
       <div ref={previewRef} style={{ marginTop: 24 }}>
-        <Layout scheme={content.scheme} blocks={blocks} />
+        <Layout
+          scheme={content.scheme}
+          content={content}
+          campaign={campaign}
+          r={rUI}
+        />
       </div>
     </div>
   );
