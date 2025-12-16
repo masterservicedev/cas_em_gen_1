@@ -236,6 +236,160 @@ function downloadCSV(filename, rows) {
 }
 
 /* ===========================
+   NEW: ESP HTML EXPORT HELPERS (ADDED ONLY)
+=========================== */
+function downloadHTML(filename, html) {
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* ===========================
+   NEW: ESP-READY HTML RENDERER (ADDED ONLY)
+   - table-based
+   - inline CSS
+   - 600px
+   - single column
+   - centered CTA + footer
+=========================== */
+function renderESPHTML({ content, campaign, scheme, primaryCtaLabel, secondaryCtaLabel }) {
+  const safeBrand = campaign.brand || "CASINO BRAND";
+  const depositBonus = campaign.depositBonus || "";
+  const freeSpins = campaign.freeSpins || "";
+  const game = campaign.game || "";
+
+  const offerParts = [];
+  if (depositBonus) offerParts.push(`Deposit bonus: ${depositBonus}`);
+  if (freeSpins) offerParts.push(`${freeSpins}${game ? ` on ${game}` : ""}`);
+  const offerLine = offerParts.length ? offerParts.join(" • ") : "A reward is available in your account.";
+
+  const bodyHtml = (content.body || [])
+    .map((p) => `<p style="margin:0 0 12px 0;line-height:1.6;">${p}</p>`)
+    .join("");
+
+  const featureHtml = (content.features || [])
+    .map((b) => `<li style="margin:0 0 8px 0;line-height:1.5;">${b}</li>`)
+    .join("");
+
+  const footer1 = content.footer1 || "This is a promotional offer. Please play responsibly.";
+  const footer2 = content.footer2 || "If you no longer wish to receive these emails, please unsubscribe here.";
+
+  const accent = scheme?.accent || "#111111";
+  const bg = scheme?.bg || "#f2f2f2";
+  const card = scheme?.card || "#ffffff";
+  const text = scheme?.text || "#111111";
+  const muted = scheme?.muted || "#555555";
+
+  // CTA label fallbacks
+  const cta1 = primaryCtaLabel || "Activate Reward";
+  const cta2 = secondaryCtaLabel || "";
+
+  // Classic email-safe button pattern (table)
+  const button1 = `
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+    <tr>
+      <td bgcolor="${accent}" style="border-radius:12px;">
+        <a href="#" style="display:inline-block;padding:14px 22px;font-weight:800;font-size:14px;color:${bg};text-decoration:none;border:1px solid ${accent};border-radius:12px;">
+          ${cta1}
+        </a>
+      </td>
+    </tr>
+  </table>`;
+
+  const button2 = cta2
+    ? `
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:10px auto 0;">
+    <tr>
+      <td style="border-radius:12px;">
+        <a href="#" style="display:inline-block;padding:12px 20px;font-weight:800;font-size:14px;color:${accent};text-decoration:none;border:2px solid ${accent};border-radius:12px;">
+          ${cta2}
+        </a>
+      </td>
+    </tr>
+  </table>`
+    : "";
+
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${safeBrand}</title>
+</head>
+<body style="margin:0;padding:0;background:${bg};">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${bg};">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:${card};border-radius:18px;overflow:hidden;">
+          <tr>
+            <td style="padding:22px 22px 10px 22px;font-family:Arial,Helvetica,sans-serif;color:${text};text-align:center;">
+              <div style="font-size:12px;font-weight:800;letter-spacing:1.2px;color:${muted};">${safeBrand}</div>
+              <h1 style="margin:14px 0 0 0;font-size:24px;line-height:1.1;font-weight:900;color:${text};">${content.headline}</h1>
+              <p style="margin:10px 0 0 0;font-size:14px;line-height:1.5;color:${muted};">${content.subheadline}</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:14px 22px 0 22px;font-family:Arial,Helvetica,sans-serif;color:${text};">
+              <p style="margin:0 0 12px 0;line-height:1.6;"><strong>${content.greeting}</strong></p>
+              <p style="margin:0 0 12px 0;line-height:1.6;color:${muted};">${offerLine}</p>
+              ${bodyHtml}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:8px 22px 0 22px;font-family:Arial,Helvetica,sans-serif;">
+              <div style="border-top:1px solid rgba(0,0,0,0.08);margin:10px 0;"></div>
+              <div style="font-size:14px;font-weight:900;color:${text};margin:0 0 10px 0;">${content.featureTitle}</div>
+              <ul style="margin:0;padding:0 0 0 18px;color:${text};font-size:14px;">
+                ${featureHtml}
+              </ul>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:18px 22px 8px 22px;text-align:center;font-family:Arial,Helvetica,sans-serif;">
+              ${button1}
+              ${button2}
+              <div style="margin-top:12px;font-size:12px;color:${muted};line-height:1.5;">
+                ${content.closing}
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:16px 22px 20px 22px;text-align:center;font-family:Arial,Helvetica,sans-serif;color:${muted};font-size:12px;line-height:1.6;">
+              <div style="border-top:1px solid rgba(0,0,0,0.08);margin:0 0 14px 0;"></div>
+              ${footer1}<br>
+              ${footer2} <span style="text-decoration:underline;">unsubscribe here</span>.
+              <div style="margin-top:10px;font-size:12px;color:${muted};">
+                © 2026 ${safeBrand}. All rights reserved.
+              </div>
+            </td>
+          </tr>
+        </table>
+
+        <!-- mobile note (clients may ignore max-width; this is still safe) -->
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+/* ===========================
    UI ATOMS
 =========================== */
 function Pill({ text, bg, color }) {
@@ -637,7 +791,6 @@ function LayoutC({ scheme, content, campaign, r }) {
 }
 
 function LayoutD({ scheme, content, campaign, r }) {
-  // newsletter style: section rhythm
   return (
     <EmailShell scheme={scheme} styleVariant="round">
       <div style={{ textAlign: "center" }}>
@@ -675,7 +828,6 @@ function LayoutD({ scheme, content, campaign, r }) {
 }
 
 function LayoutE({ scheme, content, campaign, r }) {
-  // editorial lean
   return (
     <EmailShell scheme={scheme} styleVariant="sharp">
       <div style={{ fontSize: 12, letterSpacing: 1.2, opacity: 0.85, textAlign: "center" }}>
@@ -703,7 +855,6 @@ function LayoutE({ scheme, content, campaign, r }) {
 }
 
 function LayoutF({ scheme, content, campaign, r }) {
-  // magazine blocks without columns
   return (
     <EmailShell scheme={scheme} styleVariant="round">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
@@ -730,7 +881,6 @@ function LayoutF({ scheme, content, campaign, r }) {
 }
 
 function LayoutG({ scheme, content, campaign, r }) {
-  // coupon/ticket style single column
   return (
     <EmailShell scheme={scheme} styleVariant="sharp">
       <div style={{ border: `2px dashed ${scheme.accent}`, borderRadius: 18, padding: 16 }}>
@@ -756,7 +906,6 @@ function LayoutG({ scheme, content, campaign, r }) {
 }
 
 function LayoutH({ scheme, content, campaign, r }) {
-  // timeline single column
   const stages = [
     { t: "Stage 1", d: pickSeeded(["Activate the reward", "Open your account", "Confirm eligibility"], r) },
     { t: "Stage 2", d: pickSeeded(["Start your session", "Choose eligible games", "Use the added value"], r) },
@@ -809,7 +958,6 @@ function LayoutH({ scheme, content, campaign, r }) {
 }
 
 function LayoutI({ scheme, content, campaign, r }) {
-  // minimalist premium single column
   return (
     <EmailShell scheme={scheme} styleVariant="sharp">
       <div style={{ textAlign: "center" }}>
@@ -831,7 +979,6 @@ function LayoutI({ scheme, content, campaign, r }) {
 }
 
 function LayoutJ({ scheme, content, campaign, r }) {
-  // “promo poster” style single column
   return (
     <EmailShell scheme={scheme} styleVariant="round">
       <div style={{ textAlign: "center" }}>
@@ -984,6 +1131,46 @@ export default function AdvancedEmailGenerator() {
 
   const rUI = useMemo(() => mulberry32(index * 7777 + 99), [index]);
 
+  /* ===========================
+     NEW: HTML EDITOR STATE (ADDED ONLY)
+  =========================== */
+  const [htmlEditorOpen, setHtmlEditorOpen] = useState(false);
+  const [htmlDraft, setHtmlDraft] = useState("");
+  const [htmlCopied, setHtmlCopied] = useState(false);
+
+  const buildESPHTMLFromCurrent = () => {
+    // Use deterministic UI RNG for CTA label selection so export matches view style vibes
+    const primaryLabel = ctaPrimaryLabel(campaign);
+    const secondaryLabel = pickSeeded(["View Details", "See Eligible Games", "Learn More", ""], rUI);
+
+    return renderESPHTML({
+      content,
+      campaign,
+      scheme: content.scheme,
+      primaryCtaLabel: primaryLabel,
+      secondaryCtaLabel: secondaryLabel
+    });
+  };
+
+  const openHTMLEditor = () => {
+    const html = buildESPHTMLFromCurrent();
+    setHtmlDraft(html);
+    setHtmlCopied(false);
+    setHtmlEditorOpen(true);
+  };
+
+  const downloadHTMLFromEditor = () => {
+    if (!htmlDraft) return;
+    downloadHTML(`email-esp-${index + 1}.html`, htmlDraft);
+  };
+
+  const copyHTMLFromEditor = async () => {
+    if (!htmlDraft) return;
+    const ok = await copyToClipboard(htmlDraft);
+    setHtmlCopied(ok);
+    setTimeout(() => setHtmlCopied(false), 1200);
+  };
+
   return (
     <div style={{ padding: 20 }}>
       {/* Campaign Controls */}
@@ -1047,6 +1234,9 @@ export default function AdvancedEmailGenerator() {
           <button disabled={!subjects.length || isBatching} onClick={exportSubjectsTXT}>Export TXT</button>
           <button disabled={!subjects.length || isBatching} onClick={exportSubjectsCSV}>Export CSV</button>
           <button disabled={!subjects.length || isBatching} onClick={exportSheetsIndexCSV}>Sheets Index CSV</button>
+
+          {/* NEW: ESP HTML Export + Editor (ADDED ONLY) */}
+          <button disabled={isBatching} onClick={openHTMLEditor}>Export / Edit HTML (ESP)</button>
         </div>
       </div>
 
@@ -1071,6 +1261,119 @@ export default function AdvancedEmailGenerator() {
           r={rUI}
         />
       </div>
+
+      {/* ===========================
+          NEW: HTML EDITOR MODAL (ADDED ONLY)
+      ============================ */}
+      {htmlEditorOpen && (
+        <div
+          onClick={() => setHtmlEditorOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.55)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            zIndex: 9999
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(1100px, 100%)",
+              maxHeight: "88vh",
+              overflow: "hidden",
+              background: "#fff",
+              borderRadius: 14,
+              boxShadow: "0 18px 70px rgba(0,0,0,0.35)",
+              display: "flex",
+              flexDirection: "column"
+            }}
+          >
+            <div
+              style={{
+                padding: 14,
+                borderBottom: "1px solid rgba(0,0,0,0.10)",
+                display: "flex",
+                gap: 10,
+                alignItems: "center",
+                justifyContent: "space-between"
+              }}
+            >
+              <div style={{ fontWeight: 900 }}>
+                ESP HTML Editor (Template #{index + 1})
+                <span style={{ marginLeft: 10, fontWeight: 700, opacity: 0.7 }}>
+                  (edit if your ESP needs tweaks)
+                </span>
+              </div>
+
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button onClick={() => setHtmlDraft(buildESPHTMLFromCurrent())}>
+                  Regenerate from current
+                </button>
+                <button onClick={copyHTMLFromEditor}>
+                  {htmlCopied ? "Copied ✅" : "Copy HTML"}
+                </button>
+                <button onClick={downloadHTMLFromEditor}>
+                  Download HTML
+                </button>
+                <button onClick={() => setHtmlEditorOpen(false)}>
+                  Close
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 12, padding: 14, overflow: "auto" }}>
+              <div style={{ flex: 1, minWidth: 520 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>
+                  HTML (editable)
+                </div>
+                <textarea
+                  value={htmlDraft}
+                  onChange={(e) => setHtmlDraft(e.target.value)}
+                  spellCheck={false}
+                  style={{
+                    width: "100%",
+                    height: "60vh",
+                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+                    fontSize: 12,
+                    lineHeight: 1.45,
+                    padding: 12,
+                    borderRadius: 10,
+                    border: "1px solid rgba(0,0,0,0.15)"
+                  }}
+                />
+              </div>
+
+              <div style={{ flex: 1, minWidth: 520 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, marginBottom: 6 }}>
+                  Preview (basic)
+                </div>
+                <div
+                  style={{
+                    height: "60vh",
+                    borderRadius: 10,
+                    border: "1px solid rgba(0,0,0,0.15)",
+                    overflow: "auto",
+                    background: "#f2f2f2"
+                  }}
+                >
+                  <iframe
+                    title="ESP HTML Preview"
+                    style={{ width: "100%", height: "100%", border: "0" }}
+                    srcDoc={htmlDraft}
+                  />
+                </div>
+                <div style={{ fontSize: 11, opacity: 0.75, marginTop: 8, lineHeight: 1.4 }}>
+                  Note: iframe preview is “close enough” for quick edits. Real rendering should be checked in your ESP + inbox tests.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
